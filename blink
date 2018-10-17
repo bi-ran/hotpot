@@ -27,16 +27,16 @@ while [ $# -gt 0 ]; do
    case "$1" in
       -f|--force)    force=1; shift ;;
       -h|--help)     helpmsg; exit 0 ;;
-      -j)            JOBS="$2"; shift 2 ;;
+      -j|--jobs)     JOBS="$2"; shift 2 ;;
       --jobs=*)      JOBS="${1#*=}"; shift ;;
       -n|--noexec)   noexec=1; verbose=1; shift ;;
-      -p)            PRTCL="$2"; shift 2 ;;
+      -p|--protocol) PRTCL="$2"; shift 2 ;;
       --protocol=*)  PRTCL="${1#*=}"; shift ;;
       -r|--reverse)  reverse=1; shift ;;
-      -s)            SITE="$2"; shift 2 ;;
+      -s|--site)     SITE="$2"; shift 2 ;;
       --site=*)      SITE="${1#*=}"; shift ;;
       -v|--verbose)  verbose=1; shift ;;
-      -x)            EXPR="$2"; shift 2 ;;
+      -x|--expr)     EXPR="$2"; shift 2 ;;
       --expr=*)      EXPR="${1#*=}"; shift ;;
       -d|--xrootd)   SITE="root://cmsrootd.fnal.gov/"; PRTCL=xrdcp; shift ;;
       -e|--eos)      SITE="root://eoscms.cern.ch:1094/"; PRTCL=xrdcp; shift ;;
