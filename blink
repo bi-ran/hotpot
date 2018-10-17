@@ -1,0 +1,101 @@
+#!/bin/bash
+
+helpmsg() {
+   echo -e "usage: blink (-fhjnprsvx[dem]) [list] [dest]\n"
+   echo -e "   -f, --force       force overwrite"
+   echo -e "   -h, --help        show (this) help message"
+   echo -e "   -j, --jobs        jobs relative to number of cores"
+   echo -e "   -n, --noexec      debug, set [verbose]"
+   echo -e "   -p, --protocol    transfer protocol"
+   echo -e "   -r, --reverse     reverse: remote [list], local [dest]"
+   echo -e "   -s, --site        remote site"
+   echo -e "   -v, --verbose     list [src], [dest]; requires confirmation"
+   echo -e "   -x, --expr        modify file/dest path: \${PATH\$EXPR}\n"
+   echo -e " [ -d, --xrootd    ] --site=root://cmsxrootd.fnal.gov/\n" \
+         "                       --protocol=xrdcp"
+   echo -e " [ -e, --eos       ] --site=root://eoscms.cern.ch:1094/\n" \
+         "                       --protocol=xrdcp"
+   echo -e " [ -m, --t2mit     ] --site=gsiftp://se01.cmsaf.mit.edu:2811/\n" \
+         "                       --expr=#\'/mnt/hadoop/\' --protocol=gfal-copy"
+}
+
+echo -ne '\n'
+
+ARGS=()
+
+while [ $# -gt 0 ]; do
+   case "$1" in
+      -f|--force)    force=1; shift ;;
+      -h|--help)     helpmsg; exit 0 ;;
+      -j)            JOBS="$2"; shift 2 ;;
+      --jobs=*)      JOBS="${1#*=}"; shift ;;
+      -n|--noexec)   noexec=1; verbose=1; shift ;;
+      -p)            PRTCL="$2"; shift 2 ;;
+      --protocol=*)  PRTCL="${1#*=}"; shift ;;
+      -r|--reverse)  reverse=1; shift ;;
+      -s)            SITE="$2"; shift 2 ;;
+      --site=*)      SITE="${1#*=}"; shift ;;
+      -v|--verbose)  verbose=1; shift ;;
+      -x)            EXPR="$2"; shift 2 ;;
+      --expr=*)      EXPR="${1#*=}"; shift ;;
+      -d|--xrootd)   SITE="root://cmsrootd.fnal.gov/"; PRTCL=xrdcp; shift ;;
+      -e|--eos)      SITE="root://eoscms.cern.ch:1094/"; PRTCL=xrdcp; shift ;;
+      -m|--t2mit)    SITE="gsiftp://se01.cmsaf.mit.edu:2811/";
+                        EXPR="#\'/mnt/hadoop/\'"; PRTCL=gfal-copy; shift ;;
+      -*|--*)        echo -e "invalid option: $1\n"; exit 1 ;;
+      *)             ARGS+=("$1"); shift ;;
+   esac
+done
+
+set -- "${ARGS[@]}"
+
+[ $# -ne 2 ] && { echo -e "invalid arguments\n"; exit 1; }
+
+PRTCL=${PRTCL:-cp}
+case $PRTCL in
+   cp)         [ -n "$SITE" ] && {
+                  echo -e "local copy with defined site\n";
+                  exit 1; } ;;
+   scp)        [ -n "$SITE" ] || {
+                  echo -e "undefined site for protocol: [ $PRTCL ]\n";
+                  exit 1; } && SITE="$SITE:" ;;
+   xrdcp)      [ -n "$SITE" ] || {
+                  echo -e "undefined site for protocol: [ $PRTCL ]\n";
+                  exit 1; } && { [ $force ] && PRTCL="$PRTCL -f"; } ;;
+   gfal-copy)  [ -n "$SITE" ] || {
+                  echo -e "undefined site for protocol: [ $PRTCL ]\n";
+                  exit 1; } ;;
+   *)          echo -e "unknown protocol: [ $PRTCL ]\n"; exit 1 ;;
+esac
+
+DEST="$2/"
+JOBS=${JOBS:-"+0"}
+
+[ $reverse ] && SRC=$SITE || {
+   [ -n "$EXPR" ] && eval "DEST=\${DEST$EXPR}";
+   DEST=$SITE$DEST;
+}
+
+[ $verbose ] && {
+   FILE=$(head -1 $1)
+   [[ -n "$EXPR" && $reverse ]] && eval "FILE=\${FILE$EXPR}"
+   echo -e " % transfer [ $1 ]\n %   from [ $SRC ]\n %   to [ $DEST ]\n"
+   echo -e " % cores: $(grep -c ^processor /proc/cpuinfo) [ $JOBS ]\n"
+   echo -e " % preview:"
+   echo -e " %   file: [ $SRC$FILE ]"
+   echo -e " %   command: [ sem -j$JOBS $PRTCL $SRC$FILE $DEST ]\n"
+}
+
+type sem &> /dev/null || { echo -e "!  sem (parallel) not found\n"; exit 1; }
+
+[ $noexec ] && { echo -e "#  noexec: exit early\n"; exit 0; }
+
+[[ $reverse && ! -d "$DEST" ]] && { echo -e "mkdir: $DEST\n"; mkdir -p $DEST; }
+
+cat $1 | while read FILE; do
+   [[ -n "$EXPR" && $reverse ]] && eval "FILE=\${FILE$EXPR}"
+   sem -j$JOBS --linebuffer $PRTCL $SRC$FILE $DEST
+done
+sem --wait
+
+echo -e "*  blink successful\n"
