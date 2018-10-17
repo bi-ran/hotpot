@@ -47,7 +47,6 @@ while [ $# -gt 0 ]; do
    case "$1" in 
       -d|--dir)      dir="$2"; shift 2 ;;
       --dir=*)       dir="${1#*=}"; shift ;;
-      -n|--new)      newonly=1; shift ;;
       -r|--ref)      refonly=1; shift ;;
       -*|--*)        echo -e "invalid option: $1\n"; exit 1 ;;
       *)             ARGS+=("$1"); shift ;;
@@ -56,16 +55,11 @@ done
 
 set -- "${ARGS[@]}"
 
-[[ $refonly && $newonly ]] && {
-   echo -n "both --ref and --new options set\n";
-   exit 1;
-}
-
-[[ $refonly || $newonly ]] && nargs=1 || nargs=2
+[ $refonly ] && nargs=1 || nargs=2
 [ $dir ] && ((++nargs))
 [ $# -ne $nargs ] && { echo -e "check number of arguments\n"; exit 1; }
 
-[ $newonly ] && new=$1 || ref=$1
+ref=$1
 [[ ! $refonly ]] && { new=$2; shift; }
 [ $dir ] && outdir=$2 || outdir=vfb-output
 
@@ -84,10 +78,8 @@ if ! git diff-index --quiet HEAD; then
 fi
 
 # produce forest files
-[[ ! $newonly ]] && {
-   mkdir -p $outdir/$ref/;
-   run_configs $ref $outdir/$ref/;
-}
+mkdir -p $outdir/$ref/;
+run_configs $ref $outdir/$ref/;
 
 [[ ! $refonly ]] && {
    mkdir -p $outdir/$new/;
