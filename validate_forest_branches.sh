@@ -45,8 +45,8 @@ ARGS=()
 
 while [ $# -gt 0 ]; do
    case "$1" in 
-      -d|--dir)      dir="$2"; shift 2 ;;
-      --dir=*)       dir="${1#*=}"; shift ;;
+      -o|--out)      out="$2"; shift 2 ;;
+      --out=*)       out="${1#*=}"; shift ;;
       -r|--ref)      refonly=1; shift ;;
       -*|--*)        echo -e "invalid option: $1\n"; exit 1 ;;
       *)             ARGS+=("$1"); shift ;;
@@ -56,12 +56,12 @@ done
 set -- "${ARGS[@]}"
 
 [ $refonly ] && nargs=1 || nargs=2
-[ $dir ] && ((++nargs))
+[ $out ] && ((++nargs))
 [ $# -ne $nargs ] && { echo -e "check number of arguments\n"; exit 1; }
 
 ref=$1
 [[ ! $refonly ]] && { new=$2; shift; }
-[ $dir ] && outdir=$2 || outdir=vfb-output
+[ $out ] && outdir=$2 || outdir=vfb-output
 
 # check cms environment
 if [[ -z $CMSSW_BASE || $(pwd)/ != $CMSSW_BASE/* ]]; then
