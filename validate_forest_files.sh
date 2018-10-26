@@ -19,7 +19,7 @@ set -- "${ARGS[@]}"
 
 [ $val ] &&
    valdir=$(readlink -f $val) ||
-   valdir=/afs/cern.ch/user/r/rbi/cmssw/CMSSW_10_3_0_pre1/src/ForestValidation/
+   valdir=/afs/cern.ch/user/r/rbi/cmssw/CMSSW_10_3_0/src/ForestValidation
 
 input=$(readlink -f $1); shift
 tag=$1; [ -z "$tag" ] && tag=vff; shift
