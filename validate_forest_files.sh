@@ -1,16 +1,32 @@
 #!/bin/bash
 
-valdir=/afs/cern.ch/user/r/rbi/cmssw/CMSSW_10_3_0_pre1/src/ForestValidation/
+ARGS=()
 
-input=$(readlink -f $1)
-shift
+while [ $# -gt 0 ]; do
+   case "$1" in
+      -o|--out)      out="$2"; shift 2 ;;
+      --out=*)       out="${1#*=}"; shift ;;
+      -v|--val)      val="$2"; shift 2 ;;
+      --val=*)       val="${1#*=}"; shift ;;
+      -*|--*)        echo -e "invalid option: $1\n"; exit 1 ;;
+      *)             ARGS+=("$1"); shift ;;
+   esac
+done
 
-tag=$1
-[ -z "$tag" ] && tag=vff
-shift
+set -- "${ARGS[@]}"
 
-outdir=vff-output
-outdir=$(readlink -f $outdir)
+[ $# -lt 1 ] && { echo -e "check arguments\n"; exit 1; }
+
+[ $val ] &&
+   valdir=$(readlink -f $val) ||
+   valdir=/afs/cern.ch/user/r/rbi/cmssw/CMSSW_10_3_0_pre1/src/ForestValidation/
+
+input=$(readlink -f $1); shift
+tag=$1; [ -z "$tag" ] && tag=vff; shift
+
+[ $out ] &&
+   outdir=$(readlink -f $out) ||
+   outdir=$(pwd)/vff-output
 mkdir -p $outdir
 
 firstdir=$input/$(ls $input -1 | head -1)
