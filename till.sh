@@ -1,7 +1,8 @@
 #!/bin/bash
 
 helpmessage() {
-   echo -e "usage: ./till.sh [skip] [forward]\n"
+   echo -e "usage: ./till.sh [skip] [config]\n"
+   echo -e "   -g, --grow     grow trees directly"
    echo -e "   -h, --help     show (this) help message"
    echo -e "   -l, --logs     logs directory"
    echo -e "   -o, --output   output directory"
@@ -12,6 +13,7 @@ ARGS=()
 
 while [ $# -gt 0 ]; do
    case "$1" in
+      -g|--grow)     grow=1; shift ;;
       -h|--help)     helpmessage; exit 0 ;;
       -l|--logs)     log="$2"; shift 2 ;;
       --logs=*)      out="${1#*=}"; shift ;;
@@ -26,7 +28,10 @@ done
 
 set -- "${ARGS[@]}"
 
-[ $# -lt 1 ] && { echo -e "check arguments\n"; exit 1; }
+[ $# -lt 1 ] || [ $# -gt 2 ] && {
+   echo -e "check arguments\n"; exit 1; }
+[ $grow ] && [ $# -lt 2 ] && {
+   echo -e "no config specified for --grow\n"; exit 1; }
 
 skip=$1; shift
 
@@ -50,11 +55,16 @@ for high in $(ls $data); do
             echo ${files[$RANDOM % ${#files[@]}]} \
                >> $logdir/$run/till_${stream}_$run.list
          done
+
          echo -ne "\033[34m"
          echo -n "./grow.sh -l $logdir/$run/ -o $outdir/$run/ "
          echo -n "$logdir/$run/till_${stream}_$run.list "
          echo -n "$@"
          echo -e "\033[0m"
+
+         [ $grow ] &&
+            grow.sh -l $logdir/$run/ -o $outdir/$run/ \
+               $logdir/$run/till_${stream}_$run.list $@
       fi
    done
 done
