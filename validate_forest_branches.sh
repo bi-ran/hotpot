@@ -28,10 +28,8 @@ function run_configs {
       sed -i 's/input = cms.untracked.int32(1)/input = cms.untracked.int32(-1)/' $config
 
       echo -n "running config: $config ... "
-      [[ cmsRun $config &> ${config%.*}.log ]] && {
-         mv HiForestAOD.root $output/HiForestAOD_${config%.*}.root;
-         echo -e "OK\n"; } || {
-         echo -e "ERROR\n"; }
+      cmsRun $config &> ${config%.*}.log
+      [ $? -eq 0 ] && mv HiForestAOD.root $output/HiForestAOD_${config%.*}.root
       mv ${config%.*}.log $output
 
       # revert change
