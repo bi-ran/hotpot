@@ -62,7 +62,7 @@ for f in ${files[@]}; do
    pushd $dir &> /dev/null
    echo -n "  compiling pdf..."
    pdflatex $base.tex &> $outdir/tex-$base.log
-   echo " $(readlink -f $base.pdf)"
+   mv $base.pdf $outdir
    popd &> /dev/null
 done
 
