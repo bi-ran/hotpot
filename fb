@@ -45,7 +45,6 @@ while [ $# -gt 0 ]; do
    case "$1" in
       -o|--out)      out="$2"; shift 2 ;;
       --out=*)       out="${1#*=}"; shift ;;
-      -r|--ref)      refonly=1; shift ;;
       -*|--*)        echo -e "invalid option: $1\n"; exit 1 ;;
       *)             ARGS+=("$1"); shift ;;
    esac
@@ -53,14 +52,10 @@ done
 
 set -- "${ARGS[@]}"
 
-[ $refonly ] && nargs=1 || nargs=2
-[ $# -ne $nargs ] && { echo -e "check number of arguments\n"; exit 1; }
-
-ref=$1
-[[ ! $refonly ]] && { new=$2; shift; }
+branches=( "$@" )
 [ $out ] &&
    outdir=$(readlink -f $out) ||
-   outdir=$(pwd)/vfb-output
+   outdir=$(pwd)/fb-output
 
 # check cms environment
 if [[ -z $CMSSW_BASE || $(pwd)/ != $CMSSW_BASE/* ]]; then
@@ -77,13 +72,10 @@ if ! git diff-index --quiet HEAD; then
 fi
 
 # produce forest files
-mkdir -p $outdir/$ref/;
-run_configs $ref $outdir/$ref/;
-
-[[ ! $refonly ]] && {
-   mkdir -p $outdir/$new/;
-   run_configs $new $outdir/$new/;
-}
+for branch in ${branches[@]}; do
+   mkdir -p $outdir/$branch/
+   run_configs $branch $outdir/$branch/
+done
 
 popd
 
