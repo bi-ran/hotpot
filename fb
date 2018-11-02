@@ -10,30 +10,32 @@ function run_configs {
    branch=$1
    output=$(readlink -f $2)
 
-   # checkout branch
-   echo -e "checking out branch: $branch\n"
-   git checkout $branch
+   cmdlog=$output/cmd.log
 
-   pushd HeavyIonsAnalysis/JetAnalysis/python/jets/
+   # checkout branch
+   echo -e "  checking out branch: \033[32m$branch\033[0m"
+   git checkout $branch &> $cmdlog
+
+   pushd HeavyIonsAnalysis/JetAnalysis/python/jets/ >> $cmdlog
 
    # regenerate jet sequences
    rm ak*JetSequence_*_*_cff.py*
    ./makeJetSequences.sh
 
-   popd
+   popd >> $cmdlog
 
    # clean and rebuild
    # scram b distclean
-   scram b -j4
+   scram b -j4 &> $output/build.log >> $cmdlog 2>&1
 
-   pushd HeavyIonsAnalysis/JetAnalysis/test/
+   pushd HeavyIonsAnalysis/JetAnalysis/test/ >> $cmdlog
 
    # run all foresting configs
    for config in $(ls runForestAOD_*.py); do
       # run all events for validation
       sed -i 's/input = cms.untracked.int32(1)/input = cms.untracked.int32(-1)/' $config
 
-      echo -n "running config: $config ... "
+      echo -e "   running: \033[34m$config\033[0m"
       cmsRun $config &> ${config%.*}.log
       [ $? -eq 0 ] && mv HiForestAOD.root $output/HiForestAOD_${config%.*}.root
       mv ${config%.*}.log $output
@@ -42,7 +44,8 @@ function run_configs {
       sed -i 's/input = cms.untracked.int32(-1)/input = cms.untracked.int32(1)/' $config
    done
 
-   popd
+   echo
+   popd >> $cmdlog
 }
 
 ARGS=()
@@ -58,11 +61,13 @@ while [ $# -gt 0 ]; do
 done
 
 set -- "${ARGS[@]}"
+echo
 
 branches=( "$@" )
 [ $out ] &&
    outdir=$(readlink -f $out) ||
-   outdir=$(pwd)/fb-output
+   outdir=$(pwd)/fb-output/
+outdir=$outdir/forests
 
 # check cms environment
 if [[ -z $CMSSW_BASE || $(pwd)/ != $CMSSW_BASE/* ]]; then
@@ -70,7 +75,7 @@ if [[ -z $CMSSW_BASE || $(pwd)/ != $CMSSW_BASE/* ]]; then
    exit 1
 fi
 
-pushd $CMSSW_BASE/src/
+pushd $CMSSW_BASE/src/ > /dev/null
 
 # check for uncommitted changes
 if ! git diff-index --quiet HEAD; then
@@ -84,6 +89,6 @@ for branch in ${branches[@]}; do
    run_configs $branch $outdir/$branch/
 done
 
-popd
+popd > /dev/null
 
-echo -e "done!\n"
+echo -e "  done!\n"
