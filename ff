@@ -1,9 +1,17 @@
 #!/bin/bash
 
+helpmessage() {
+   echo -e "usage: ff [input] {tag}\n"
+   echo -e "   -h, --help     show (this) help message"
+   echo -e "   -o, --out      output directory"
+   echo -e "   -v, --val      path to forest validation executable"
+}
+
 ARGS=()
 
 while [ $# -gt 0 ]; do
    case "$1" in
+      -h|--help)     helpmessage; exit 0 ;;
       -o|--out)      out="$2"; shift 2 ;;
       --out=*)       out="${1#*=}"; shift ;;
       -v|--val)      val="$2"; shift 2 ;;
