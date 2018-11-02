@@ -60,18 +60,19 @@ for f in ${files[@]}; do
 
    filetag=$tag-$(basename $f .root)
    fulltag=${filetag}_${brtag}
-
    date=$(date +"%Y%m%d")
+
+   echo -e "  running rfd: \033[34m$(basename $f)\033[0m"
    ./bin/runForestDQM.exe $argf $filetag $argl "$@" &> $outdir/rfd-$fulltag.log
 
-   dir=pdfDir/$date/forestDQM_${fulltag}_${date}
    base=forestDQM_${fulltag}_${date}VALIDATION_MAIN_AllTrees_${date}
 
-   pushd $dir &> /dev/null
-   echo -n "  compiling pdf..."
+   pushd pdfDir/$date/forestDQM_${fulltag}_${date} &> /dev/null
+   echo -e "    compiling tex..."
    pdflatex $base.tex &> $outdir/tex-$base.log
    mv $base.pdf $outdir
    popd &> /dev/null
 done
 
-echo -e "\n  done!"
+echo
+echo -e "  output directory: \033[32m$outdir\033[0m"
