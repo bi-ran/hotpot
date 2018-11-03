@@ -34,12 +34,12 @@ instance=phys03
 echo
 resp=$(dasgoclient $fwargs -query="$dataset instance=prod/$instance ${@:2}")
 
-[ "$resp" ] && echo -e "$resp" || {
-   echo -e "  null response"
+[ "$resp" ] && echo -e "\033[32m$resp\033[0m" || {
+   echo -e "  \033[31mnull response\033[0m"
    exit 1
 }
 
 [ $link ] && {
    url='https://cmsweb.cern.ch/das/request?input=dataset='
-   echo -e "\n$url$dataset&instance=prod/$instance"
+   echo -e "\n\033[34m$url$dataset&instance=prod/$instance\033[0m"
 }
