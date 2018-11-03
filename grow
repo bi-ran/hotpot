@@ -32,10 +32,10 @@ config=$2
 
 [ $out ] &&
    outdir=$(readlink -f $out) ||
-   outdir=/eos/cms/store/group/phys_heavyions/rbi/persimmon/
+   outdir=/eos/cms/store/group/phys_heavyions/rbi/farm/
 [ $log ] &&
    logdir=$(readlink -f $log) ||
-   logdir=/afs/cern.ch/work/r/rbi/private/logs/persimmon/
+   logdir=/afs/cern.ch/work/r/rbi/private/logs/farm/
 
 mkdir -p $outdir
 mkdir -p $logdir
