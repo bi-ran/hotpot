@@ -1,7 +1,8 @@
 #!/bin/bash
 
 helpmessage() {
-   echo -e "usage: ./till.sh [skip] [config]\n"
+   echo -e "usage: ./till.sh [skip]\n"
+   echo -e "   -c, --config   cmsrun config"
    echo -e "   -f, --forward  forward arguments to grow"
    echo -e "   -g, --grow     grow trees directly"
    echo -e "   -h, --help     show (this) help message"
@@ -15,6 +16,8 @@ ARGS=()
 
 while [ $# -gt 0 ]; do
    case "$1" in
+      -c|--config)   config="$2"; shift 2 ;;
+      --config=*)    config="${1#*=}"; shift ;;
       -f|--forward)  fwargs="$2"; shift 2 ;;
       --forward=*)   fwargs="${1#*=}"; shift ;;
       -g|--grow)     grow=1; shift ;;
@@ -33,12 +36,11 @@ done
 
 set -- "${ARGS[@]}"
 
-[ $# -lt 1 ] || [ $# -gt 2 ] && {
-   echo -e "check arguments\n"; exit 1; }
-[ $grow ] && [ $# -ne 2 ] && {
+[ $# -gt 1 ] && { echo -e "check arguments\n"; exit 1; }
+[ $grow ] && [ ! $config ] && {
    echo -e "no config specified for --grow\n"; exit 1; }
 
-skip=$1; shift
+skip=$1
 
 [ $out ] &&
    outdir=$(readlink -f $out) ||
@@ -53,25 +55,28 @@ data=/eos/cms/store/t0streamer/Data/$stream/000
 for high in $(ls $data); do
    for low in $(ls $data/$high); do
       run=$high$low
-      if ! grep -Fqx "$run" $skip; then
-         [ $recho ] && { echo $run; continue; }
 
-         files=($data/$high/$low/*)
-         mkdir -p $logdir/$run/
-         for i in {1...4}; do
-            echo ${files[$RANDOM % ${#files[@]}]} \
-               >> $logdir/$run/till_${stream}_$run.list
-         done
+      [ $skip ] && {
+         if grep -Fqx "$run" $skip; then
+            continue
+         fi }
 
-         echo -ne "\033[34m"
-         echo -n "./grow.sh -l $logdir/$run/ -o $outdir/$run/ "
-         echo -n "$logdir/$run/till_${stream}_$run.list "
-         echo -n "$fwargs"
-         echo -e "\033[0m"
+      [ $recho ] && { echo $run; continue; }
 
-         [ $grow ] &&
-            grow.sh -l $logdir/$run/ -o $outdir/$run/ \
-               $logdir/$run/till_${stream}_$run.list $fwargs
-      fi
+      files=($data/$high/$low/*)
+      mkdir -p $logdir/$run/
+      for i in {1...4}; do
+         echo ${files[$RANDOM % ${#files[@]}]} \
+            >> $logdir/$run/till_${stream}_$run.list
+      done
+
+      echo -ne "\033[34m"
+      echo -n "./grow $fwargs -l $logdir/$run/ -o $outdir/$run/ "
+      echo -n "$logdir/$run/till_${stream}_$run.list $config"
+      echo -e "\033[0m"
+
+      [ $grow ] &&
+         grow $fwargs -l $logdir/$run/ -o $outdir/$run/ \
+            $logdir/$run/till_${stream}_$run.list $config
    done
 done
