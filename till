@@ -76,7 +76,7 @@ for high in $(ls $data); do
       [ $nfiles -lt $nf ] && nf=$nfiles
       indices=($(shuf -i 1-$nfiles -n $nf))
       for i in "${indices[@]}"; do
-         echo ${files[$((i-1))]} >> $flist
+         echo "file:${files[$((i-1))]}" >> $flist
       done
 
       echo -ne "\033[34m"

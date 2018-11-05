@@ -54,7 +54,7 @@ while read line; do
    if [ $merge ]; then
       input=$input$line,
    else
-      lesc=$(echo ${line%.*} | sed -e 's/\//_/g')
+      lesc=$(echo ${line%.*} | sed -e 's/^file://' -e 's/\//_/g')
       input+=("$line")
       output+=("$lesc")
    fi
