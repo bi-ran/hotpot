@@ -64,6 +64,6 @@ echo -e "  growing tree(s)..."
 for i in "${!input[@]}"; do
    cmsRun $config $fwargs \
       inputFiles=${input[$i]} \
-      outputFile=${output[$i]}.root \
+      outputFile=$outdir/${output[$i]}.root \
       &> $logdir/${output[$i]}.log
 done
