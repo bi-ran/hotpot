@@ -7,6 +7,7 @@ helpmessage() {
    echo -e "   -g, --grow     grow trees directly"
    echo -e "   -h, --help     show (this) help message"
    echo -e "   -l, --logs     logs directory"
+   echo -e "   -n             number of files"
    echo -e "   -o, --output   output directory"
    echo -e "   -r, --runs     print run numbers"
    echo -e "   -s, --stream   data streamer"
@@ -24,6 +25,8 @@ while [ $# -gt 0 ]; do
       -h|--help)     helpmessage; exit 0 ;;
       -l|--logs)     log="$2"; shift 2 ;;
       --logs=*)      out="${1#*=}"; shift ;;
+      -n)            n="$2"; shift 2 ;;
+      -n=*)          n="${1#*=}"; shift ;;
       -o|--output)   out="$2"; shift 2 ;;
       --output=*)    out="${1#*=}"; shift ;;
       -r|--runs)     recho=1; shift ;;
@@ -52,6 +55,8 @@ skip=$1
 
 data=/eos/cms/store/t0streamer/Data/$stream/000
 
+[ $n ] || n=4
+
 for high in $(ls $data); do
    for low in $(ls $data/$high); do
       run=$high$low
@@ -65,7 +70,7 @@ for high in $(ls $data); do
 
       files=($data/$high/$low/*)
       mkdir -p $logdir/$run/
-      for i in {1...4}; do
+      for i in {1..$n}; do
          echo ${files[$RANDOM % ${#files[@]}]} \
             >> $logdir/$run/till_${stream}_$run.list
       done
