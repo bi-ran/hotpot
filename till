@@ -7,6 +7,7 @@ helpmessage() {
    echo -e "   -h, --help     show (this) help message"
    echo -e "   -l, --logs     logs directory"
    echo -e "   -o, --output   output directory"
+   echo -e "   -r, --runs     print run numbers"
    echo -e "   -s, --stream   data streamer"
 }
 
@@ -22,6 +23,7 @@ while [ $# -gt 0 ]; do
       --logs=*)      out="${1#*=}"; shift ;;
       -o|--output)   out="$2"; shift 2 ;;
       --output=*)    out="${1#*=}"; shift ;;
+      -r|--runs)     runout=1; shift ;;
       -s|--stream)   stream="$2"; shift 2 ;;
       --stream=*)    stream="${1#*=}"; shift ;;
       -*)            echo -e "invalid option: $1\n"; exit 1 ;;
@@ -52,6 +54,8 @@ for high in $(ls $data); do
    for low in $(ls $data/$high); do
       run=$high$low
       if ! grep -Fqx "$run" $skip; then
+         [ $runout ] && { echo $run; continue; }
+
          files=($data/$high/$low/*)
          mkdir -p $logdir/$run/
          for i in {1...4}; do
