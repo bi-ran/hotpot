@@ -68,20 +68,24 @@ for high in $(ls $data); do
 
       [ $recho ] && { echo $run; continue; }
 
-      files=($data/$high/$low/*)
       mkdir -p $logdir/$run/
-      for i in {1..$n}; do
-         echo ${files[$RANDOM % ${#files[@]}]} \
-            >> $logdir/$run/till_${stream}_$run.list
+      flist=$logdir/$run/till_${stream}_$run.list
+
+      files=($data/$high/$low/*)
+      nfiles=${#files[@]}; nf=$n
+      [ $nfiles -lt $nf ] && nf=$nfiles
+      indices=($(shuf -i 1-$nfiles -n $nf))
+      for i in "${indices[@]}"; do
+         echo ${files[$((i-1))]} >> $flist
       done
 
       echo -ne "\033[34m"
-      echo -n "./grow $fwargs -l $logdir/$run/ -o $outdir/$run/ "
-      echo -n "$logdir/$run/till_${stream}_$run.list $config"
+      echo -n "./grow $fwargs $flist $config"
+      echo -n " -l $logdir/$run/ -o $outdir/$run/"
       echo -e "\033[0m"
 
       [ $grow ] &&
          grow $fwargs -l $logdir/$run/ -o $outdir/$run/ \
-            $logdir/$run/till_${stream}_$run.list $config
+            $flist $config
    done
 done
