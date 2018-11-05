@@ -2,6 +2,7 @@
 
 helpmessage() {
    echo -e "usage: ./grow.sh [list] [config]\n"
+   echo -e "   -f, --forward  forward arguments"
    echo -e "   -h, --help     show (this) help message"
    echo -e "   -l, --logs     logs directory"
    echo -e "   -m, --merge    run all input files in a single job"
@@ -12,6 +13,8 @@ ARGS=()
 
 while [ $# -gt 0 ]; do
    case "$1" in
+      -f|--forward)  fwargs="$2"; shift 2 ;;
+      --forward=*)   fwargs="${1#*=}"; shift ;;
       -h|--help)     helpmessage; exit 0 ;;
       -l|--logs)     log="$2"; shift 2 ;;
       --logs=*)      out="${1#*=}"; shift ;;
@@ -59,7 +62,8 @@ done <<< "$(cat $list)"
 
 echo -e "  growing tree(s)..."
 for i in "${!input[@]}"; do
-   cmsRun $config inputFiles=${input[$i]} \
+   cmsRun $config $fwargs \
+      inputFiles=${input[$i]} \
       outputFile=${output[$i]}.root \
       &> $logdir/${output[$i]}.log
 done
