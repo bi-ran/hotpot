@@ -57,35 +57,35 @@ data=/eos/cms/store/t0streamer/Data/$stream/000
 
 [ $n ] || n=4
 
+runs=()
+
 for high in $(ls $data); do
    for low in $(ls $data/$high); do
       run=$high$low
 
-      [ $skip ] && {
-         if grep -Fqx "$run" $skip; then
-            continue
-         fi }
-
-      [ $recho ] && { echo $run; continue; }
-
-      mkdir -p $logdir/$run/
-      flist=$logdir/$run/till_${stream}_$run.list
-
-      files=($data/$high/$low/*)
-      nfiles=${#files[@]}; nf=$n
-      [ $nfiles -lt $nf ] && nf=$nfiles
-      indices=($(shuf -i 1-$nfiles -n $nf))
-      for i in "${indices[@]}"; do
-         echo "file:${files[$((i-1))]}" >> $flist
-      done
-
-      if [ ! $grow ]; then
-         echo -n "./grow $fwargs $flist $config"
-         echo    " -l $logdir/$run/ -o $outdir/$run/"
-      else
-         echo -e "  prepared: \033[34m$flist\033[0m"
-         grow $fwargs -l $logdir/$run/ -o $outdir/$run/ \
-            $flist $config
-      fi
+      [ $skip ] && grep -Fqx "$run" $skip ||
+         runs+=("$run")
    done
+done
+
+[ $recho ] && { printf '%s\n' "${runs[@]}"; exit 0; }
+
+for run in ${runs[@]}; do
+   mkdir -p $logdir/$run/
+   list=$logdir/$run/till_${stream}_$run.list
+
+   files=($data/$high/$low/*)
+   nfiles=${#files[@]}; nf=$n
+   [ $nfiles -lt $nf ] && nf=$nfiles
+   indices=($(shuf -i 1-$nfiles -n $nf))
+   for i in "${indices[@]}"; do
+      echo "file:${files[$((i-1))]}" >> $list
+   done
+
+   if [ ! $grow ]; then
+      echo "./grow $fwargs $list $config -l $logdir/$run -o $outdir/$run"
+   else
+      echo -e "  prepared: \033[34m$list\033[0m"
+      grow $fwargs -l $logdir/$run/ -o $outdir/$run/ $list $config
+   fi
 done
