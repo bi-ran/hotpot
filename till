@@ -11,6 +11,7 @@ helpmessage() {
    echo -e "   -o, --output   output directory"
    echo -e "   -r, --runs     print run numbers"
    echo -e "   -s, --stream   data streamer"
+   echo -e "   -u, --update   update [skip] with runs"
 }
 
 ARGS=()
@@ -32,6 +33,7 @@ while [ $# -gt 0 ]; do
       -r|--runs)     recho=1; shift ;;
       -s|--stream)   stream="$2"; shift 2 ;;
       --stream=*)    stream="${1#*=}"; shift ;;
+      -u|--update)   update=1; shift ;;
       -*)            echo -e "invalid option: $1\n"; exit 1 ;;
       *)             ARGS+=("$1"); shift ;;
    esac
@@ -87,5 +89,6 @@ for run in ${runs[@]}; do
    else
       echo -e "  prepared: \033[34m$list\033[0m"
       grow $fwargs -l $logdir/$run/ -o $outdir/$run/ $list $config
+      [ $update -a $? -a $skip ] && echo $run >> $skip
    fi
 done

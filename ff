@@ -2,6 +2,7 @@
 
 helpmessage() {
    echo -e "usage: ff [input] {tag}\n"
+   echo -e "   -c, --clone    clone first branch (directory)"
    echo -e "   -h, --help     show (this) help message"
    echo -e "   -o, --out      output directory"
    echo -e "   -v, --val      path to forest validation executable"
@@ -11,6 +12,7 @@ ARGS=()
 
 while [ $# -gt 0 ]; do
    case "$1" in
+      -c|--clone)    clone=1; shift ;;
       -h|--help)     helpmessage; exit 0 ;;
       -o|--out)      out="$2"; shift 2 ;;
       --out=*)       out="${1#*=}"; shift ;;
@@ -37,24 +39,29 @@ tag=$1; [ -z "$tag" ] && tag=vff; shift
    outdir=$(pwd)/vff-output
 mkdir -p $outdir
 
-firstdir=$input/$(ls $input -1 | head -1)
-files=$(ls $firstdir/*.root)
-
 # navigate to forest validation directory
 pushd $valdir &> /dev/null
 eval `scramv1 runtime -sh`
 make -j8
 
-for d in $(ls $input/* -d); do
-   argl=$argl,$(basename $d)
+branches=($(ls $input/* -d))
+[ $clone ] && {
+   echo -e "  clone branch: \033[31m${branches[0]}\033[0m"
+   branches=("${branches[0]}" "${branches[@]}")
+}
+
+for b in ${branches[@]}; do
+   argl=$argl,$(basename $b)
 done
 argl="${argl:1}"
 brtag=$(echo "$argl" | tr ',' '_')
 
+files=$(ls ${branches[0]}/*.root)
+
 for f in ${files[@]}; do
    argf=
-   for d in $(ls $input/* -d); do
-      argf=$argf,$d/$(basename $f)
+   for b in ${branches[@]}; do
+      argf=$argf,$b/$(basename $f)
    done
    argf="${argf:1}"
 
