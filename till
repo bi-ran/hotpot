@@ -79,13 +79,13 @@ for high in $(ls $data); do
          echo "file:${files[$((i-1))]}" >> $flist
       done
 
-      echo -ne "\033[34m"
-      echo -n "./grow $fwargs $flist $config"
-      echo -n " -l $logdir/$run/ -o $outdir/$run/"
-      echo -e "\033[0m"
-
-      [ $grow ] &&
+      if [ ! $grow ]; then
+         echo -n "./grow $fwargs $flist $config"
+         echo    " -l $logdir/$run/ -o $outdir/$run/"
+      else
+         echo -e "  prepared: \033[34m$flist\033[0m"
          grow $fwargs -l $logdir/$run/ -o $outdir/$run/ \
             $flist $config
+      fi
    done
 done

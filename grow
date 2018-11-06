@@ -61,9 +61,14 @@ while read line; do
 done <<< "$(cat $list)"
 
 echo -e "  growing tree(s)..."
+echo -e "   tree: \033[34m$outdir/\033[0m"
+echo -e "   logs: \033[34m$logdir/\033[0m"
 for i in "${!input[@]}"; do
+   echo -ne "    + \033[33m${output[$i]}\033[0m\r"
    cmsRun $config $fwargs \
       inputFiles=${input[$i]} \
       outputFile=$outdir/${output[$i]}.root \
       &> $logdir/${output[$i]}.log
+   [ $? ] && stat=32 || stat=31
+   echo -e "    + \033[${stat}m${output[$i]}\033[0m"
 done
