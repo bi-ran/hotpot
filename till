@@ -42,10 +42,18 @@ done
 set -- "${ARGS[@]}"
 
 [ $# -gt 1 ] && { echo -e "check arguments\n"; exit 1; }
-[ $grow ] && [ ! $config ] && {
-   echo -e "no config specified for --grow\n"; exit 1; }
+
+[ $grow -a ! $config ] && {
+   echo -e "  \033[31mno tree (config) to grow\033[0m\n"; exit 1; }
+[ ! $grow -a $update ] && {
+   echo -e "  \033[31mcannot update without growing\033[0m\n"; exit 1; }
 
 skip=$1
+
+[ ! -f $skip ] && {
+   echo -e "  \033[31mfile not found: $skip\033[0m\n"; exit 1; }
+[ ! $skip -a $update ] && {
+   echo -e "  \033[31mno file to update\033[0m\n"; exit 1; }
 
 [ $out ] &&
    outdir=$(readlink -f $out) ||
@@ -69,6 +77,9 @@ for high in $(ls $data); do
          runs+=("$run")
    done
 done
+
+[ ${#runs[@]} -eq 0 ] && {
+   echo -e "  \033[31mno new runs\033[0m\n"; exit 0; }
 
 [ $recho ] && { printf '%s\n' "${runs[@]}"; exit 0; }
 
