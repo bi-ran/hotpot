@@ -2,6 +2,7 @@
 
 helpmessage() {
    echo -e "usage: ./till.sh [skip]\n"
+   echo -e "   -a, --all      use all files found"
    echo -e "   -c, --config   cmsrun config"
    echo -e "   -f, --forward  forward arguments to grow"
    echo -e "   -g, --grow     grow trees directly"
@@ -18,6 +19,7 @@ ARGS=()
 
 while [ $# -gt 0 ]; do
    case "$1" in
+      -a|--all)      all=1; shift ;;
       -c|--config)   config="$2"; shift 2 ;;
       --config=*)    config="${1#*=}"; shift ;;
       -f|--forward)  fwargs="$2"; shift 2 ;;
@@ -65,6 +67,7 @@ skip=$1
 
 data=/eos/cms/store/t0streamer/Data/$stream/000
 
+[ $n ] && [ $all ] && echo -e "  \033[31m--all overwrites -n\033[0m\n"
 [ $n ] || n=4
 
 runs=()
@@ -89,7 +92,7 @@ for run in ${runs[@]}; do
 
    files=($data/$high/$low/*)
    nfiles=${#files[@]}; nf=$n
-   [ $nfiles -lt $nf ] && nf=$nfiles
+   [ $all -o $nfiles -lt $nf ] && nf=$nfiles
    indices=($(shuf -i 1-$nfiles -n $nf))
    for i in "${indices[@]}"; do
       echo "file:${files[$((i-1))]}" >> $list
