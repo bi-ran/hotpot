@@ -89,6 +89,6 @@ for run in ${runs[@]}; do
    else
       echo -e "  prepared: \033[34m$list\033[0m"
       grow $fwargs -l $logdir/$run/ -o $outdir/$run/ $list $config
-      [ $update -a $? -a $skip ] && echo $run >> $skip
+      [ $update -a $skip ] && echo $run >> $skip
    fi
 done
