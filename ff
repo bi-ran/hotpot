@@ -69,14 +69,15 @@ for f in ${files[@]}; do
    fulltag=${filetag}_${brtag}
    date=$(date +"%Y%m%d")
 
-   echo -e "  running rfd: \033[34m$(basename $f)\033[0m"
+   echo -e "  processing: \033[34m$(basename $f)\033[0m"
    ./bin/runForestDQM.exe $argf $filetag $argl "$@" &> $outdir/rfd-$fulltag.log
 
    base=forestDQM_${fulltag}_${date}VALIDATION_MAIN_AllTrees_${date}
 
    pushd pdfDir/$date/forestDQM_${fulltag}_${date} &> /dev/null
-   echo -e "    compiling tex..."
+   echo -ne "   \033[33mcompiling tex\033[0m\r"
    pdflatex $base.tex &> $outdir/tex-$base.log
+   echo -e  "   \033[32mcompiling tex\033[0m"
    mv $base.pdf $outdir
    popd &> /dev/null
 done
