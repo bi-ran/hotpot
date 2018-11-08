@@ -4,13 +4,13 @@ helpmessage() {
    echo -e "usage: ./till.sh [skip]\n"
    echo -e "   -a, --all      use all files found"
    echo -e "   -c, --config   cmsrun config"
+   echo -e "   -e, --echo     print run numbers"
    echo -e "   -f, --forward  forward arguments to grow"
    echo -e "   -g, --grow     grow trees directly"
    echo -e "   -h, --help     show (this) help message"
    echo -e "   -l, --logs     logs directory"
    echo -e "   -n             number of files"
    echo -e "   -o, --output   output directory"
-   echo -e "   -r, --runs     print run numbers"
    echo -e "   -s, --stream   data streamer"
    echo -e "   -u, --update   update [skip] with runs"
 }
@@ -22,6 +22,7 @@ while [ $# -gt 0 ]; do
       -a|--all)      all=1; shift ;;
       -c|--config)   config="$2"; shift 2 ;;
       --config=*)    config="${1#*=}"; shift ;;
+      -e|--echo)     recho=1; shift ;;
       -f|--forward)  fwargs="$2"; shift 2 ;;
       --forward=*)   fwargs="${1#*=}"; shift ;;
       -g|--grow)     grow=1; shift ;;
@@ -32,7 +33,6 @@ while [ $# -gt 0 ]; do
       -n=*)          n="${1#*=}"; shift ;;
       -o|--output)   out="$2"; shift 2 ;;
       --output=*)    out="${1#*=}"; shift ;;
-      -r|--runs)     recho=1; shift ;;
       -s|--stream)   stream="$2"; shift 2 ;;
       --stream=*)    stream="${1#*=}"; shift ;;
       -u|--update)   update=1; shift ;;
