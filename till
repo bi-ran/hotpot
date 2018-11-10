@@ -29,13 +29,13 @@ while [ $# -gt 0 ]; do
       -g|--grow)     grow=1; shift ;;
       -h|--help)     helpmessage; exit 0 ;;
       -l|--logs)     log="$2"; shift 2 ;;
-      --logs=*)      out="${1#*=}"; shift ;;
+      --logs=*)      log="${1#*=}"; shift ;;
       -n)            n="$2"; shift 2 ;;
       -n=*)          n="${1#*=}"; shift ;;
       -o|--output)   out="$2"; shift 2 ;;
       --output=*)    out="${1#*=}"; shift ;;
-      -r|--runs)     runs="$2"; shift 2 ;;
-      --runs=*)      runs="${1#*=}"; shift ;;
+      -r|--runs)     rskip="$2"; shift 2 ;;
+      --runs=*)      rskip="${1#*=}"; shift ;;
       -s|--stream)   stream="$2"; shift 2 ;;
       --stream=*)    stream="${1#*=}"; shift ;;
       -u|--update)   update=1; shift ;;
@@ -48,14 +48,14 @@ set -- "${ARGS[@]}"
 
 [ $# -ne 0 ] && { echo -e "check arguments\n"; exit 1; }
 
-[ $grow -a ! $config ] && {
+[ $grow ] && [ ! $config ] && {
    echo -e "  \033[31mno tree (config) to grow\033[0m\n"; exit 1; }
-[ ! $grow -a $update ] && {
+[ ! $grow ] && [ $update ] && {
    echo -e "  \033[31mcannot update without growing\033[0m\n"; exit 1; }
 
-[ ! -f $runs ] && {
-   echo -e "  \033[31mfile not found: $runs\033[0m\n"; exit 1; }
-[ ! $runs -a $update ] && {
+[ ! -f $rskip ] && {
+   echo -e "  \033[31mfile not found: $rskip\033[0m\n"; exit 1; }
+[ ! $rskip ] && [ $update ] && {
    echo -e "  \033[31mno file to update\033[0m\n"; exit 1; }
 
 [ $out ] &&
@@ -77,7 +77,7 @@ for high in $(ls $data); do
    for low in $(ls $data/$high); do
       run=$high$low
 
-      [ $runs ] && grep -Fqx "$run" $runs ||
+      [ $rskip ] && grep -Fqx "$run" $rskip ||
          runs+=("$run")
    done
 done
@@ -91,19 +91,19 @@ for run in ${runs[@]}; do
    mkdir -p $logdir/$run/
    list=$logdir/$run/till_${stream}_$run.list
 
-   files=($data/$high/$low/*)
+   files=($data/${run:0:3}/${run:3}/*)
    nfiles=${#files[@]}; nf=$n
-   [ $all -o $nfiles -lt $nf ] && nf=$nfiles
-   indices=($(shuf -i 1-$nfiles -n $nf))
+   [ $all ] || [ $nfiles -lt $nf ] && nf=$nfiles
+   indices=($(shuf -i 0-$((nfiles-1)) -n $nf))
    for i in "${indices[@]}"; do
-      echo "file:${files[$((i-1))]}" >> $list
+      echo "file:${files[$i]}" >> $list
    done
 
    if [ ! $grow ]; then
-      echo "./grow $fwargs $list $config -l $logdir/$run -o $outdir/$run"
+      echo "grow $list $config $fwargs -l $logdir/$run -o $outdir/$run"
    else
       echo -e "  prepared: \033[34m$list\033[0m"
       grow $fwargs -l $logdir/$run/ -o $outdir/$run/ $list $config
-      [ $update -a $runs ] && echo $run >> $runs
+      [ $update ] && [ $rskip ] && echo $run >> $rskip
    fi
 done
