@@ -23,6 +23,8 @@ while [ $# -gt 0 ]; do
       -a|--all)      all=1; shift ;;
       -c|--config)   config="$2"; shift 2 ;;
       --config=*)    config="${1#*=}"; shift ;;
+      -d|--data)     data="$2"; shift 2 ;;
+      --data=*)      data="${1#*=}"; shift ;;
       -e|--echo)     recho=1; shift ;;
       -f|--forward)  fwargs="$2"; shift 2 ;;
       --forward=*)   fwargs="${1#*=}"; shift ;;
@@ -39,6 +41,8 @@ while [ $# -gt 0 ]; do
       -s|--stream)   stream="$2"; shift 2 ;;
       --stream=*)    stream="${1#*=}"; shift ;;
       -u|--update)   update=1; shift ;;
+      -x|--suffix)   suffix="$2"; shift 2;;
+      --suffix=*)    suffix="${1#*=}"; shift ;;
       -*)            echo -e "invalid option: $1\n"; exit 1 ;;
       *)             ARGS+=("$1"); shift ;;
    esac
@@ -58,6 +62,11 @@ set -- "${ARGS[@]}"
 [ ! $rskip ] && [ $update ] && {
    echo -e "  \033[31mno file to update\033[0m\n"; exit 1; }
 
+[ $data ] && [ $stream ] &&
+   echo -e "  \033[31m--data overwrites --stream\033[0m\n"
+[ $all ] && [ $n ] &&
+   echo -e "  \033[31m--all overwrites -n\033[0m\n"
+
 [ $out ] &&
    outdir=$(readlink -f $out) ||
    outdir=/eos/cms/store/group/phys_heavyions/rbi/farm/
@@ -65,10 +74,7 @@ set -- "${ARGS[@]}"
    logdir=$(readlink -f $log) ||
    logdir=/afs/cern.ch/work/r/rbi/private/logs/farm/
 [ $stream ] || stream=HIPhysicsMinimumBiasReducedFormat8
-
-data=/eos/cms/store/t0streamer/Data/$stream/000
-
-[ $n ] && [ $all ] && echo -e "  \033[31m--all overwrites -n\033[0m\n"
+[ $data ] || data=/eos/cms/store/t0streamer/Data/$stream/000
 [ $n ] || n=4
 
 runs=()
@@ -91,7 +97,7 @@ for run in ${runs[@]}; do
    mkdir -p $logdir/$run/
    list=$logdir/$run/till_${stream}_$run.list
 
-   files=($data/${run:0:3}/${run:3}/*)
+   files=($data/${run:0:3}/${run:3}/$suffix/*)
    nfiles=${#files[@]}; nf=$n
    [ $all ] || [ $nfiles -lt $nf ] && nf=$nfiles
    indices=($(shuf -i 0-$((nfiles-1)) -n $nf))
