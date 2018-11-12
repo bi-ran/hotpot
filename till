@@ -4,16 +4,19 @@ helpmessage() {
    echo -e "usage: till\n"
    echo -e "   -a, --all      use all files found"
    echo -e "   -c, --config   cmsrun config"
+   echo -e "   -d, --data     overwrite streamer path"
    echo -e "   -e, --echo     print run numbers"
    echo -e "   -f, --forward  forward arguments to grow"
    echo -e "   -g, --grow     grow trees directly"
    echo -e "   -h, --help     show (this) help message"
+   echo -e "   -k, --kill     force removal of existing lists"
    echo -e "   -l, --logs     logs directory"
    echo -e "   -n             number of files"
    echo -e "   -o, --output   output directory"
-   echo -e "   -r, --runs     runs to omit"
    echo -e "   -s, --stream   data streamer"
    echo -e "   -u, --update   update [runs] with runs"
+   echo -e "   -x, --exclude  runs to omit"
+   echo -e "   -z, --suffix   suffix after run directories"
 }
 
 ARGS=()
@@ -37,12 +40,12 @@ while [ $# -gt 0 ]; do
       -n=*)          n="${1#*=}"; shift ;;
       -o|--output)   out="$2"; shift 2 ;;
       --output=*)    out="${1#*=}"; shift ;;
-      -r|--runs)     rskip="$2"; shift 2 ;;
-      --runs=*)      rskip="${1#*=}"; shift ;;
       -s|--stream)   stream="$2"; shift 2 ;;
       --stream=*)    stream="${1#*=}"; shift ;;
       -u|--update)   update=1; shift ;;
-      -x|--suffix)   suffix="$2"; shift 2;;
+      -x|--exclude)  exclude="$2"; shift 2 ;;
+      --exclude=*)   exclude="${1#*=}"; shift ;;
+      -z|--suffix)   suffix="$2"; shift 2;;
       --suffix=*)    suffix="${1#*=}"; shift ;;
       -*)            echo -e "invalid option: $1\n"; exit 1 ;;
       *)             ARGS+=("$1"); shift ;;
@@ -58,9 +61,9 @@ set -- "${ARGS[@]}"
 [ ! $grow ] && [ $update ] && {
    echo -e "  \033[31mcannot update without growing\033[0m\n"; exit 1; }
 
-[ ! -f $rskip ] && {
-   echo -e "  \033[31mfile not found: $rskip\033[0m\n"; exit 1; }
-[ ! $rskip ] && [ $update ] && {
+[ ! -f $exclude ] && {
+   echo -e "  \033[31mfile not found: $exclude\033[0m\n"; exit 1; }
+[ ! $exclude ] && [ $update ] && {
    echo -e "  \033[31mno file to update\033[0m\n"; exit 1; }
 
 [ $data ] && [ $stream ] &&
@@ -84,7 +87,7 @@ for high in $(ls $data); do
    for low in $(ls $data/$high); do
       run=$high$low
 
-      [ $rskip ] && grep -Fqx "$run" $rskip ||
+      [ $exclude ] && grep -Fqx "$run" $exclude ||
          runs+=("$run")
    done
 done
@@ -119,6 +122,6 @@ for run in ${runs[@]}; do
    else
       echo -e "  prepared: \033[34m$list\033[0m"
       grow $fwargs -l $logdir/$run/ -o $outdir/$run/ $list $config
-      [ $update ] && [ $rskip ] && echo $run >> $rskip
+      [ $update ] && [ $exclude ] && echo $run >> $exclude
    fi
 done
