@@ -30,6 +30,7 @@ while [ $# -gt 0 ]; do
       --forward=*)   fwargs="${1#*=}"; shift ;;
       -g|--grow)     grow=1; shift ;;
       -h|--help)     helpmessage; exit 0 ;;
+      -k|--kill)     kill=1; shift ;;
       -l|--logs)     log="$2"; shift 2 ;;
       --logs=*)      log="${1#*=}"; shift ;;
       -n)            n="$2"; shift 2 ;;
@@ -96,6 +97,14 @@ done
 for run in ${runs[@]}; do
    mkdir -p $logdir/$run/
    list=$logdir/$run/till_${stream}_$run.list
+
+   [ -f $list ] && {
+      if [ $kill ]; then
+         rm $list
+      else
+         echo -e "  \033[31mlist exists:";
+         echo -e "   $list\033[0m\n"; exit 1;
+      fi }
 
    files=($data/${run:0:3}/${run:3}/$suffix/*)
    nfiles=${#files[@]}; nf=$n
