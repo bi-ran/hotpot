@@ -13,6 +13,7 @@ helpmessage() {
    echo -e "   -l, --logs     logs directory"
    echo -e "   -n             number of files"
    echo -e "   -o, --output   output directory"
+   echo -e "   -p, --path     set data path"
    echo -e "   -s, --stream   data streamer"
    echo -e "   -u, --update   update [runs] with runs"
    echo -e "   -x, --exclude  runs to omit"
@@ -40,6 +41,8 @@ while [ $# -gt 0 ]; do
       -n=*)          n="${1#*=}"; shift ;;
       -o|--output)   out="$2"; shift 2 ;;
       --output=*)    out="${1#*=}"; shift ;;
+      -p|--path)     path="$2"; shift 2 ;;
+      --path=*)      path="${1#*=}"; shift ;;
       -s|--stream)   stream="$2"; shift 2 ;;
       --stream=*)    stream="${1#*=}"; shift ;;
       -u|--update)   update=1; shift ;;
@@ -66,6 +69,11 @@ set -- "${ARGS[@]}"
 [ ! $exclude ] && [ $update ] && {
    echo -e "  \033[31mno file to update\033[0m\n"; exit 1; }
 
+[ $path ] && [ $recho ] && {
+   echo -e "  \033[31mnothing to echo: path is set\033[0m\n"; exit 1; }
+
+[ $path ] && ( [ $data ] || [ $stream ] ) &&
+   echo -e "  \033[31m--path overwrites --data and --stream\033[0m\n"
 [ $data ] && [ $stream ] &&
    echo -e "  \033[31m--data overwrites --stream\033[0m\n"
 [ $all ] && [ $n ] &&
@@ -81,25 +89,40 @@ set -- "${ARGS[@]}"
 [ $data ] || data=/eos/cms/store/t0streamer/Data/$stream/000
 [ $n ] || n=4
 
+paths=()
+logs=()
+outs=()
 runs=()
 
-for high in $(ls $data); do
-   for low in $(ls $data/$high); do
-      run=$high$low
+if [ $path ]; then
+   paths=$path
+   logs=$logdir
+   outs=$outdir
+else
+   for high in $(ls $data); do
+      for low in $(ls $data/$high); do
+         run=$high$low
 
-      [ $exclude ] && grep -Fqx "$run" $exclude ||
-         runs+=("$run")
+         [ $exclude ] && grep -Fqx "$run" $exclude ||
+            runs+=("$run")
+      done
    done
-done
 
-[ ${#runs[@]} -eq 0 ] && {
-   echo -e "  \033[31mno new runs\033[0m\n"; exit 0; }
+   [ ${#runs[@]} -eq 0 ] && {
+      echo -e "  \033[31mno new runs\033[0m\n"; exit 0; }
 
-[ $recho ] && { printf '%s\n' "${runs[@]}"; exit 0; }
+   [ $recho ] && { printf '%s\n' "${runs[@]}"; exit 0; }
 
-for run in ${runs[@]}; do
-   mkdir -p $logdir/$run/
-   list=$logdir/$run/till_${stream}_$run.list
+   for run in ${runs[@]}; do
+      paths+=($data/${run:0:3}/${run:3}/$suffix)
+      logs+=($logdir/$run)
+      outs+=($outdir/$run)
+   done
+fi
+
+for p in ${!paths[@]}; do
+   mkdir -p ${logs[$p]}/
+   list=${logs[$p]}/till_${paths[$p]//\//_}.list
 
    [ -f $list ] && {
       if [ $kill ]; then
@@ -109,7 +132,7 @@ for run in ${runs[@]}; do
          echo -e "   $list\033[0m\n"; exit 1;
       fi }
 
-   files=($data/${run:0:3}/${run:3}/$suffix/*)
+   files=(${paths[$p]}/*)
    nfiles=${#files[@]}; nf=$n
    [ $all ] || [ $nfiles -lt $nf ] && nf=$nfiles
    indices=($(shuf -i 0-$((nfiles-1)) -n $nf))
@@ -118,10 +141,10 @@ for run in ${runs[@]}; do
    done
 
    if [ ! $grow ]; then
-      echo "grow $list $config $fwargs -l $logdir/$run -o $outdir/$run"
+      echo "grow $list $config $fwargs -l ${logs[$p]} -o ${outs[$p]}"
    else
       echo -e "  prepared: \033[34m$list\033[0m"
-      grow $fwargs -l $logdir/$run/ -o $outdir/$run/ $list $config
-      [ $update ] && [ $exclude ] && echo $run >> $exclude
+      grow $fwargs -l ${logs[$p]} -o ${outs[$p]} $list $config
+      [ $update ] && [ $exclude ] && echo ${runs[$p]} >> $exclude
    fi
 done
