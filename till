@@ -85,7 +85,7 @@ set -- "${ARGS[@]}"
 [ $log ] &&
    logdir=$(readlink -f $log) ||
    logdir=/afs/cern.ch/work/r/rbi/private/logs/farm/
-[ $stream ] || stream=HIPhysicsMinimumBiasReducedFormat8
+[ $stream ] || stream=HIPhysicsMinimumBias0
 [ $data ] || data=/eos/cms/store/t0streamer/Data/$stream/000
 [ $n ] || n=4
 
