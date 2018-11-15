@@ -29,7 +29,7 @@ while [ $# -gt 0 ]; do
       --config=*)    config="${1#*=}"; shift ;;
       -d|--data)     data="$2"; shift 2 ;;
       --data=*)      data="${1#*=}"; shift ;;
-      -e|--echo)     recho=1; shift ;;
+      -e|--echo)     shout=1; shift ;;
       -f|--forward)  fwargs="$2"; shift 2 ;;
       --forward=*)   fwargs="${1#*=}"; shift ;;
       -g|--grow)     grow=1; shift ;;
@@ -69,7 +69,7 @@ set -- "${ARGS[@]}"
 [ ! $exclude ] && [ $update ] && {
    echo -e "  \033[31mno file to update\033[0m\n"; exit 1; }
 
-[ $path ] && [ $recho ] && {
+[ $path ] && [ $shout ] && {
    echo -e "  \033[31mnothing to echo: path is set\033[0m\n"; exit 1; }
 
 [ $path ] && ( [ $data ] || [ $stream ] ) &&
@@ -111,7 +111,7 @@ else
    [ ${#runs[@]} -eq 0 ] && {
       echo -e "  \033[31mno new runs\033[0m\n"; exit 0; }
 
-   [ $recho ] && { printf '%s\n' "${runs[@]}"; exit 0; }
+   [ $shout ] && { printf '%s\n' "${runs[@]}"; exit 0; }
 
    for run in ${runs[@]}; do
       paths+=($data/${run:0:3}/${run:3}/$suffix)
