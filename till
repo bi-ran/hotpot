@@ -145,6 +145,6 @@ for p in ${!paths[@]}; do
    else
       echo -e "  prepared: \033[34m$list\033[0m"
       grow $fwargs -l ${logs[$p]} -o ${outs[$p]} $list $config
-      [ $update ] && [ $exclude ] && echo ${runs[$p]} >> $exclude
+      [ $update ] && [ $exclude ] && stdbuf -oL echo ${runs[$p]} >> $exclude
    fi
 done
