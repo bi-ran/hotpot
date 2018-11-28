@@ -13,7 +13,7 @@ function run_configs {
    cmdlog=$output/cmd.log
 
    # checkout branch
-   echo -e "  checking out branch: \033[32m$branch\033[0m"
+   echo -e "  checking out branch: \033[34m$branch\033[0m"
    git checkout $branch &> $cmdlog
 
    pushd HeavyIonsAnalysis/JetAnalysis/python/jets/ >> $cmdlog
@@ -26,26 +26,47 @@ function run_configs {
 
    # clean and rebuild
    # scram b distclean
-   scram b -j4 &> $output/build.log >> $cmdlog 2>&1
+   scram b -j4 &> $output/build.log
 
-   pushd HeavyIonsAnalysis/JetAnalysis/test/ >> $cmdlog
+   mkdir test_configs_${branch}
+   cp HeavyIonsAnalysis/JetAnalysis/test/runForestAOD_*.py test_configs_${branch}
 
    # run all foresting configs
-   for config in $(ls runForestAOD_*.py); do
+   echo -e "   running configs..."
+   pushd test_configs_${branch} >> $cmdlog
+
+   configs=(runForestAOD_*.py)
+   children=()
+
+   for config in ${configs[@]}; do
       # run all events for validation
       sed -i 's/input = cms.untracked.int32(1)/input = cms.untracked.int32(-1)/' $config
+      sed -i "s/HiForestAOD.root/HiForestAOD_${config%.*}.root/g" $config
 
-      echo -e "   running: \033[34m$config\033[0m"
-      cmsRun $config &> ${config%.*}.log
-      [ $? -eq 0 ] && mv HiForestAOD.root $output/HiForestAOD_${config%.*}.root
-      mv ${config%.*}.log $output
+      cmsRun $config &> ${config%.*}.log &
+      children+=("$!")
+   done
 
-      # revert change
-      sed -i 's/input = cms.untracked.int32(-1)/input = cms.untracked.int32(1)/' $config
+   for c in "${!children[@]}"; do
+      config=${configs[$c]}
+
+      wait ${children[$c]}
+      retc=$?
+
+      echo -n '    '
+      [ $retc -eq 0 ] && echo -ne "\033[32mDONE:" || echo -ne "\033[31mFAIL:"
+      echo -e " $config\033[0m"
    done
 
    echo
+
+   mv HiForestAOD_*.root $output
+   mv runForestAOD_*.log $output
+
    popd >> $cmdlog
+
+   # cleanup
+   rm -r test_configs_${branch}
 }
 
 ARGS=()
