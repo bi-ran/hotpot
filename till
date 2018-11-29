@@ -148,7 +148,8 @@ for p in ${!paths[@]}; do
       echo "grow $list $config $fwargs -l ${logs[$p]} -o ${outs[$p]}"
    else
       echo -e "  prepared: \033[34m$list\033[0m"
-      grow $fwargs -l ${logs[$p]} -o ${outs[$p]} $list $config
+      k5reauth -p rbi -k $HOME/.keytab -- grow \
+         $fwargs -l ${logs[$p]} -o ${outs[$p]} $list $config
       [ $update ] && [ $exclude ] && stdbuf -oL echo ${runs[$p]} >> $exclude
    fi
 done
