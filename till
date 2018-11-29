@@ -17,6 +17,7 @@ helpmessage() {
    echo -e "   -s, --stream   data streamer"
    echo -e "   -u, --update   update [runs] with runs"
    echo -e "   -x, --exclude  runs to omit"
+   echo -e "   -y, --yell     print full data paths"
    echo -e "   -z, --suffix   suffix after run directories"
 }
 
@@ -48,6 +49,7 @@ while [ $# -gt 0 ]; do
       -u|--update)   update=1; shift ;;
       -x|--exclude)  exclude="$2"; shift 2 ;;
       --exclude=*)   exclude="${1#*=}"; shift ;;
+      -y|--yell)     yell=1; shift ;;
       -z|--suffix)   suffix="$2"; shift 2;;
       --suffix=*)    suffix="${1#*=}"; shift ;;
       -*)            echo -e "invalid option: $1\n"; exit 1 ;;
@@ -119,6 +121,8 @@ else
       outs+=($outdir/$run)
    done
 fi
+
+[ $yell ] && { printf '%s\n' "${paths[@]}"; exit 0; }
 
 for p in ${!paths[@]}; do
    mkdir -p ${logs[$p]}/
