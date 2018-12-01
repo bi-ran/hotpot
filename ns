@@ -1,0 +1,229 @@
+#!/usr/bin/env python
+
+from __future__ import print_function
+
+import argparse
+import contextlib
+import math
+import os
+import subprocess
+import sys
+
+from CRABAPI.RawCommand import crabCommand as crab
+
+class void():
+    def write(self, x):
+        pass
+
+
+@contextlib.contextmanager
+def silence():
+    original = sys.stdout
+    sys.stdout = void()
+    yield
+    sys.stdout = original
+
+
+sites = {
+    'T2_US_MIT': '/store/user/',
+    'T2_CH_CERN': '/store/group/phys_heavyions/',
+    }
+
+# to be tuned (GEN_SIM, DIGI2RAW, etc..)
+steps = ['GENSIM', 'DIGIRAW', 'RECO', 'FOREST']
+guess = ['GEN_SIM', 'DIGI2RAW', 'RECO', 'Forest']
+target = {
+    'GENSIM': 200,
+    'DIGIRAW': 200,
+    'RECO': 200,
+    'FOREST': 1000,
+    }
+
+def generate_config(params):
+    config = {
+        'General': {
+            'transferOutputs': 'transfer',
+            'requestName': 'request',
+            'workArea': 'workspace' },
+        'JobType': {
+            'pluginName': 'type',
+            'psetName': 'pset',
+            'maxMemoryMB': 'memory',
+            'maxJobRuntimeMin': 'runtime' },
+        'Data': {
+            'inputDataset': 'dataset',
+            'inputDBS': 'dbs',
+            'splitting': 'split',
+            'unitsPerJob': 'units',
+            'totalUnits': 'total',
+            'outLFNDirBase': 'lfn',
+            'outputPrimaryDataset': 'pd',
+            'publication': 'publish' },
+        'User': {},
+        'Site': {
+            'blacklist': 'blacklist',
+            'whitelist': 'whitelist',
+            'storageSite': 'site' },
+        'Debug': {
+            'extraJDL': 'extrajdl' },
+        }
+
+    output = 'config_crab_{}.py'.format(params['request'].lower())
+    if params['out']:
+        output = '{}/{}'.format(params['out'], output)
+
+    with open(output, 'w') as f:
+        f.write('from WMCore.Configuration import Configuration\n')
+        f.write('config = Configuration()\n')
+        f.write('\n')
+
+        for section, options in config.iteritems():
+            f.write('config.section_(\'{}\')\n'.format(section))
+            for option, key in options.iteritems():
+                if key not in params or params[key] is None:
+                    continue
+
+                if isinstance(params[key], str):
+                    f.write('config.{}.{} = \'{}\'\n'.format(
+                        section, option, params[key]))
+                else:
+                    f.write('config.{}.{} = {}\n'.format(
+                        section, option, str(params[key])))
+            f.write('\n')
+
+    print('generated config:', output)
+
+
+def collect_production_parameters(params):
+    if params['events'] <= 0:
+        print('invalid events:', params['events'])
+        sys.exit()
+
+    if params['filter'] <= 0:
+        print('invalid filter efficiency:', params['filter'])
+        sys.exit()
+
+    # split jobs based on filter efficiency and total events
+    # target 200 events per job (GENSIM)
+    params['split'] = 'EventBased'
+    params['units'] = int(math.ceil(200 / params['filter']))
+    params['total'] = int(params['units'] * math.ceil(params['events'] / 200))
+
+    # devise dataset name if not given
+    if params['pd'] is None:
+        params['pd'] = params['pset'].partition('_cff_py')[0]
+
+    # generate request name
+    params['request'] = '{}_GENSIM_{}_{}'.format(
+        params['pd'],
+        os.environ['CMSSW_VERSION'][5:].replace('_', ''),
+        params['tag'])
+
+    params['type'] = 'PrivateMC'
+
+
+def collect_analysis_parameters(params):
+    if params['dataset'] is None:
+        if params['dir'] is None:
+            print('no input dataset')
+            sys.exit()
+        else:
+            # find output dataset
+            with silence():
+                crab_resp = crab('status', dir=params['dir'])
+            params['dataset'] = eval(crab_resp['outdatasets'])[0]
+            params['dbs'] = 'phys03'
+    elif params['dbs'] is None:
+        print('no dbs instance')
+        sys.exit()
+
+    if params['split'] is None:
+        params['split'] = 'FileBased'
+
+        # rough splitting for jobs, based on events/job target
+        das_resp = eval(subprocess.check_output(
+            ['dasgoclient', '-query={} instance=prod/{} summary'.format(
+                 params['dataset'], params['dbs'])]))
+        params['units'] = max(1, int(math.floor(target[params['step']]
+            / (das_resp[0]['nevents'] / das_resp[0]['nfiles']))))
+        params['total'] = params['events']
+    else:
+        if params['units'] is None or params['total'] is None:
+            print('manual splitting, but no units/total')
+            sys.exit()
+
+    # generate request name
+    params['request'] = '{}_{}_{}_{}'.format(
+        params['dataset'].split('/')[1],
+        params['step'],
+        os.environ['CMSSW_VERSION'][5:].replace('_', ''),
+        params['tag'])
+
+    params['type'] = 'Analysis'
+
+
+def collect_parameters(params):
+    if params['step'] in steps:
+        pass
+    elif params['step'] is None and any(g in params['pset'] for g in guess):
+        step = next(g for g in guess if g in params['pset'])
+        params['step'] = steps[guess.index(step)]
+        print('guessing this is ..', params['step'])
+    else:
+        print('no --step')
+        sys.exit()
+
+    if params['lfn'] is None:
+        if params['site'] not in sites:
+            print('invalid site')
+            sys.exit()
+
+        params['lfn'] = sites[params['site']]
+    params['lfn'] += os.environ['USER']
+
+    if params['whitelist'] is not None:
+        params['extrajdl'] = ['+CMS_ALLOW_OVERFLOW=False']
+
+    if params['tag'] != 'v1':
+        params['tag'] += '_v1'
+
+    if params['step'] == 'GENSIM':
+        collect_production_parameters(params)
+    else:
+        collect_analysis_parameters(params)
+
+    generate_config(params)
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('pset')
+
+    parser.add_argument('-d', '--dir')
+    parser.add_argument('-o', '--out')
+    parser.add_argument('-s', '--step')
+
+    parser.add_argument('--events', default=-1, type=int)
+    parser.add_argument('--filter', default=1., type=float)
+    parser.add_argument('--memory', default=4000, type=int)
+    parser.add_argument('--publish', default=True, type=bool)
+    parser.add_argument('--site', default='T2_US_MIT')
+    parser.add_argument('--tag', default='v1')
+    parser.add_argument('--transfer', default=True, type=bool)
+    parser.add_argument('--workspace', default='crab_area')
+
+    parser.add_argument('-w', '--whitelist', nargs='?', const='T2_US_MIT')
+
+    parser.add_argument('--blacklist')
+    parser.add_argument('--dataset')
+    parser.add_argument('--dbs')
+    parser.add_argument('--lfn')
+    parser.add_argument('--pd')
+    parser.add_argument('--runtime', type=int)
+    parser.add_argument('--split')
+    parser.add_argument('--total')
+    parser.add_argument('--units')
+
+    args = parser.parse_args()
+
+    collect_parameters(vars(args))
