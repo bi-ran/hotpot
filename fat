@@ -1,0 +1,67 @@
+#!/usr/bin/env python
+
+from __future__ import print_function
+
+import argparse
+import subprocess
+
+def weigh(params):
+    index = 0 if params['raw'] else 1
+
+    fats = []
+    for f in params['files']:
+        weight = subprocess.check_output(
+            ['edmEventSize', '-d', f, '-o', '/dev/stdout']).split('\n')[2:]
+        fats.append({':'.join(e[0].split('_')[1:3]).rstrip(':'):
+            (float(e[1])/1000, float(e[2])/1000)
+            for e in (w.split(' ') for w in weight if len(w))})
+
+    mass = [sum(v[index] for v in f.itervalues()) for f in fats]
+
+    if len(fats) == 2:
+        diff = {k: fats[1][k][index] - fats[0][k][index]
+            for k in fats[0] if k in fats[1]}
+        for k, v in sorted(diff.items(), key=lambda x: abs(x[1])):
+            print('{:>84} : {:9.3f} > {:9.3f} | {:8.3f} [{:7.1%}]'.format(
+                k, fats[0][k][index], fats[1][k][index], v, v/fats[0][k][index]))
+            fats[0].pop(k)
+            fats[1].pop(k)
+
+        print(' loss:')
+        for k, v in sorted(fats[0].items(), key=lambda x: x[1][index]):
+            print('{:>84} : {:9.3f}'.format(k, v[index]))
+        print(' gain:')
+        for k, v in sorted(fats[1].items(), key=lambda x: x[1][index]):
+            print('{:>84} :              {:9.3f}'.format(k, v[index]))
+        print('  --')
+        print('{:>84} : {:9.3f} > {:9.3f} | {:8.3f} [{:7.1%}]'.format(
+            'total', mass[0], mass[1], mass[1]-mass[0], mass[1]/mass[0]-1))
+
+        change = sum(diff.itervalues())
+        loss = -sum(v[index] for v in fats[0].itervalues())
+        gain = sum(v[index] for v in fats[1].itervalues())
+
+        print('')
+        print(' summary:')
+        print('  change: {:.3f}, loss: {:.3f}, gain: {:.3f}'.format(
+            change, loss, gain))
+        print('  total: {:.3f}'.format(change + loss + gain))
+
+    elif len(fats) == 1:
+        total = sum(v[index] for v in fats[0].itervalues())
+        for k, v in sorted(fats[0].items(), key=lambda x: x[1][index]):
+            print('{:>84} : {:9.3f} > {:9.3f} | [{:7.1%}]'.format(
+                k, v[0], v[1], v[index]/total))
+
+    else:
+        print('1 or 2 files only, please')
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('files', nargs='+')
+    parser.add_argument('-r', '--raw', action='store_true')
+
+    args = parser.parse_args()
+
+    weigh(vars(args))
