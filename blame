@@ -6,9 +6,9 @@ import argparse
 
 from collections import defaultdict
 
-def parse_times(params):
+def parse_log(log, key):
     times = []
-    with open(params['log']) as f:
+    with open(log) as f:
         for l in f:
             if not l.startswith('TimeModule>'):
                 continue
@@ -16,20 +16,57 @@ def parse_times(params):
             _, event, _, label, module, time = l.strip().split(' ')
             times.append((event, label, module, float(time) * 1000))
 
-    key = params['key']
-
     # build dict, sorting on (event | label [default] | module)
     times_per_key = defaultdict(list)
     for t in times:
         times_per_key[t[key]].append(t[3])
 
-    for k, v in sorted(times_per_key.items(), key=lambda x: x[1]):
-        print('{:>72}: {:.4f}'.format(k, sum(v)/len(v)))
+    return {k: sum(v)/len(v) for k, v in times_per_key.items()}
+
+
+def parse_times(params):
+    key = params['key']
+
+    if len(params['logs']) == 2 and params['diff']:
+        grouped_times = [parse_log(log, key) for log in params['logs']]
+        diff_times = {k: grouped_times[1][k] - grouped_times[0][k]
+            for k in grouped_times[0] if k in grouped_times[1]}
+
+        for k, v in sorted(diff_times.items(), key=lambda x: abs(x[1])):
+            print('{:>64}: {:9.4f} [{:8.2%}]'.format(k, v, v/grouped_times[0][k]))
+            grouped_times[0].pop(k)
+            grouped_times[1].pop(k)
+
+        print(' removals:')
+        for k, v in sorted(grouped_times[0].items(), key=lambda x: x[1]):
+            print('{:>64}: -{:.4f}'.format(k, v))
+        print(' additions:')
+        for k, v in sorted(grouped_times[1].items(), key=lambda x: x[1]):
+            print('{:>64}: +{:.4f}'.format(k, v))
+
+        changes = sum(diff_times.itervalues())
+        removals = -sum(grouped_times[0].itervalues())
+        additions = sum(grouped_times[1].itervalues())
+
+        print('')
+        print(' summary:')
+        print('  changes: {:.4f}, removals: {:.4f}, additions: {:.4f}'.format(
+            changes, removals, additions))
+        print('  total: {:.4f}'.format(changes + removals + additions))
+
+    elif len(params['logs']) == 1:
+        times_per_key = parse_log(params['logs'][0], key)
+        for k, v in sorted(times_per_key.items(), key=lambda x: x[1]):
+            print('{:>64}: {:.4f}'.format(k, v))
+
+    else:
+        print('multiple files not supported except for --diff (2)')
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('log')
+    parser.add_argument('logs', nargs='+')
+    parser.add_argument('-d', '--diff', action='store_true')
     parser.add_argument('-k', '--key', nargs='?', default=1, const=1, type=int)
 
     args = parser.parse_args()
