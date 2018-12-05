@@ -1,0 +1,49 @@
+#!/bin/bash
+
+helpmessage() {
+   echo -e "usage: dt [input]\n"
+   echo -e "   -k, --key      group by event/module/label"
+   echo -e "   -t, --tag      tag"
+}
+
+ARGS=()
+
+while [ $# -gt 0 ]; do
+   case "$1" in
+      -h|--help)     helpmessage; exit 0 ;;
+      -k|--key)      key="$2"; shift 2 ;;
+      --key=*)       key="${1#*=}"; shift ;;
+      -t|--tag)      tag="$2"; shift 2 ;;
+      --tag=*)       tag="${1#*=}"; shift ;;
+      -*)            echo -e "invalid option: $1\n"; exit 1 ;;
+      *)             ARGS+=("$1"); shift ;;
+   esac
+done
+
+set -- "${ARGS[@]}"
+
+[ $# -ne 1 ] && { echo -e "check arguments\n"; exit 1; }
+
+input=$1
+
+[ $tag ] || tag=dt
+
+file=$(basename $input)
+timestamp=$(date +"%F-%H_%M_%S")
+label=${file%%.*}_${tag}_${timestamp}
+
+mkdir $label
+cp $input $label/$label.py
+pushd $label
+
+cat >> $label.py << @EOF
+process.Timing = cms.Service("Timing",
+    summaryOnly = cms.untracked.bool(False),
+    useJobReport = cms.untracked.bool(True))
+@EOF
+
+cmsRun $label.py &> $label.log
+
+blame $label.log -k $key > $label.time
+
+popd
