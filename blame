@@ -27,37 +27,41 @@ def parse_log(log, key):
 def parse_times(params):
     key = params['key']
 
-    if len(params['logs']) == 2 and params['diff']:
-        grouped_times = [parse_log(log, key) for log in params['logs']]
-        diff_times = {k: grouped_times[1][k] - grouped_times[0][k]
-            for k in grouped_times[0] if k in grouped_times[1]}
+   if len(params['logs']) == 2 and params['diff']:
+       group = [parse_log(log, key) for log in params['logs']]
+       total = [sum(g.itervalues()) for g in group]
+       diff = {k: group[1][k] - group[0][k] for k in group[0] if k in group[1]}
 
-        for k, v in sorted(diff_times.items(), key=lambda x: abs(x[1])):
-            print('{:>64}: {:9.4f} [{:8.2%}]'.format(k, v, v/grouped_times[0][k]))
-            grouped_times[0].pop(k)
-            grouped_times[1].pop(k)
+       for k, v in sorted(diff.items(), key=lambda x: abs(x[1])):
+           print('{:>64}: {:9.3f} > {:9.3f} | {:9.3f} [{:8.2%}]'.format(
+               k, group[0][k], group[1][k], v, v/group[0][k]))
+           group[0].pop(k)
+           group[1].pop(k)
 
-        print(' removals:')
-        for k, v in sorted(grouped_times[0].items(), key=lambda x: x[1]):
-            print('{:>64}: -{:.4f}'.format(k, v))
-        print(' additions:')
-        for k, v in sorted(grouped_times[1].items(), key=lambda x: x[1]):
-            print('{:>64}: +{:.4f}'.format(k, v))
+       print('  removals:')
+       for k, v in sorted(group[0].items(), key=lambda x: x[1]):
+           print('{:>64}: {:9.3f}'.format(k, v))
+       print('  additions:')
+       for k, v in sorted(group[1].items(), key=lambda x: x[1]):
+           print('{:>64}:             {:9.3f}'.format(k, v))
+       print('   --')
+       print('{:>64}: {:9.3f} > {:9.3f} | {:9.3f} [{:8.2%}]'.format(
+           'total', total[0], total[1], total[1]-total[0], total[1]/total[0]-1))
 
-        changes = sum(diff_times.itervalues())
-        removals = -sum(grouped_times[0].itervalues())
-        additions = sum(grouped_times[1].itervalues())
+       changes = sum(diff.itervalues())
+       removals = -sum(group[0].itervalues())
+       additions = sum(group[1].itervalues())
 
-        print('')
-        print(' summary:')
-        print('  changes: {:.4f}, removals: {:.4f}, additions: {:.4f}'.format(
-            changes, removals, additions))
-        print('  total: {:.4f}'.format(changes + removals + additions))
+       print('')
+       print('  summary:')
+       print('   changes: {:.3f}, removals: {:.3f}, additions: {:.3f}'.format(
+           changes, removals, additions))
+       print('   total: {:.3f}'.format(changes + removals + additions))
 
-    elif len(params['logs']) == 1:
-        times_per_key = parse_log(params['logs'][0], key)
-        for k, v in sorted(times_per_key.items(), key=lambda x: x[1]):
-            print('{:>64}: {:.4f}'.format(k, v))
+   elif len(params['logs']) == 1:
+       times_per_key = parse_log(params['logs'][0], key)
+       for k, v in sorted(times_per_key.items(), key=lambda x: x[1]):
+           print('{:>64}: {:9.3f}'.format(k, v))
 
     else:
         print('multiple files not supported except for --diff (2)')
