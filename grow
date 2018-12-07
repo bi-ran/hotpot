@@ -35,10 +35,10 @@ config=$2
 
 [ $out ] && {
    mkdir -p $out; outdir=$(readlink -f $out); } ||
-   outdir=/eos/cms/store/group/phys_heavyions/rbi/farm/
+   outdir=/eos/cms/store/group/phys_heavyions/$USER/farm/
 [ $log ] && {
    mkdir -p $log; logdir=$(readlink -f $log); } ||
-   logdir=/afs/cern.ch/work/r/rbi/private/logs/farm/
+   logdir=/afs/cern.ch/work/${USER:0:1}/$USER/private/logs/farm/
 
 mkdir -p $outdir
 mkdir -p $logdir

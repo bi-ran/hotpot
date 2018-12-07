@@ -83,10 +83,10 @@ set -- "${ARGS[@]}"
 
 [ $out ] &&
    outdir=$(readlink -f $out) ||
-   outdir=/eos/cms/store/group/phys_heavyions/rbi/farm/
+   outdir=/eos/cms/store/group/phys_heavyions/$USER/farm/
 [ $log ] &&
    logdir=$(readlink -f $log) ||
-   logdir=/afs/cern.ch/work/r/rbi/private/logs/farm/
+   logdir=/afs/cern.ch/work/${USER:0:1}/$USER/private/logs/farm/
 [ $stream ] || stream=HIPhysicsMinimumBias0
 [ $data ] || data=/eos/cms/store/t0streamer/Data/$stream/000
 [ $n ] || n=4
@@ -148,7 +148,7 @@ for p in ${!paths[@]}; do
       echo "grow $list $config $fwargs -l ${logs[$p]} -o ${outs[$p]}"
    else
       echo -e "  prepared: \033[34m$list\033[0m"
-      k5reauth -p rbi -k $HOME/.keytab -- grow \
+      k5reauth -p $USER -k $HOME/.keytab -- grow \
          $fwargs -l ${logs[$p]} -o ${outs[$p]} $list $config
       [ $update ] && [ $exclude ] && stdbuf -oL echo ${runs[$p]} >> $exclude
    fi
