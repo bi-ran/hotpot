@@ -221,8 +221,8 @@ if __name__ == '__main__':
     parser.add_argument('--pd')
     parser.add_argument('--runtime', type=int)
     parser.add_argument('--split')
-    parser.add_argument('--total')
-    parser.add_argument('--units')
+    parser.add_argument('--total', type=int)
+    parser.add_argument('--units', type=int)
 
     args = parser.parse_args()
 
