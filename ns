@@ -31,13 +31,14 @@ sites = {
     }
 
 # to be tuned (GEN_SIM, DIGI2RAW, etc..)
-steps = ['GENSIM', 'DIGIRAW', 'RECO', 'FOREST']
-guess = ['GEN_SIM', 'DIGI2RAW', 'RECO', 'Forest']
+steps = ['GENSIM', 'DIGIRAW', 'RECO', 'FOREST', 'CUSTOM']
+guess = ['GEN_SIM', 'DIGI2RAW', 'RECO', 'Forest', 'CUSTOM']
 target = {
     'GENSIM': 200,
     'DIGIRAW': 200,
     'RECO': 200,
     'FOREST': 1000,
+    'CUSTOM': 400,
     }
 
 def generate_config(params):
@@ -209,10 +210,15 @@ def check_parameters(params):
 
 
 def collect_parameters(params):
-    if params['step'] is None and any(g in params['pset'] for g in guess):
-        step = next(g for g in guess if g in params['pset'])
-        params['step'] = steps[guess.index(step)]
-        print('guessing this is ..', params['step'])
+    if params['step'] is None:
+        if any(g in params['pset'] for g in guess):
+            step = next(g for g in guess if g in params['pset'])
+            params['step'] = steps[guess.index(step)]
+        elif params['dir'] is not None or params['dataset'] is not None:
+            params['step'] = 'CUSTOM'
+
+        if params['step'] is not None:
+            print('guessing this is ..', params['step'])
 
     if not check_parameters(params):
         sys.exit()
