@@ -204,11 +204,11 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--out')
     parser.add_argument('-s', '--step')
 
+    parser.add_argument('-e', '--events', default=-1, type=int)
+    parser.add_argument('-f', '--filter', default=1., type=float)
+    parser.add_argument('-m', '--memory', default=4000, type=int)
     parser.add_argument('-v', '--version', default=1, type=int)
 
-    parser.add_argument('--events', default=-1, type=int)
-    parser.add_argument('--filter', default=1., type=float)
-    parser.add_argument('--memory', default=4000, type=int)
     parser.add_argument('--publish', default=True, type=bool)
     parser.add_argument('--site', default='T2_US_MIT')
     parser.add_argument('--tag', default='')
@@ -219,13 +219,15 @@ if __name__ == '__main__':
 
     parser.add_argument('-i', '--input', action='append')
 
-    parser.add_argument('--blacklist')
+    parser.add_argument('--split', choices={
+        'Automatic', 'EventBased', 'FileBased', 'LumiBased',
+        'EventAwareLumiBased'})
+
     parser.add_argument('--dataset')
     parser.add_argument('--dbs')
     parser.add_argument('--lfn')
     parser.add_argument('--pd')
     parser.add_argument('--runtime', type=int)
-    parser.add_argument('--split')
     parser.add_argument('--total', type=int)
     parser.add_argument('--units', type=int)
 
