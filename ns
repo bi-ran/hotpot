@@ -48,6 +48,7 @@ def generate_config(params):
         'JobType': {
             'pluginName': 'type',
             'psetName': 'pset',
+            'inputFiles': 'input',
             'maxMemoryMB': 'memory',
             'maxJobRuntimeMin': 'runtime' },
         'Data': {
@@ -214,6 +215,8 @@ if __name__ == '__main__':
     parser.add_argument('--workspace', default='crab_area')
 
     parser.add_argument('-w', '--whitelist', nargs='?', const='T2_US_MIT')
+
+    parser.add_argument('-i', '--input', action='append')
 
     parser.add_argument('--blacklist')
     parser.add_argument('--dataset')
