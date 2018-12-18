@@ -125,6 +125,22 @@ def collect_analysis_parameters(params):
         params['dataset'] = eval(crab_resp['outdatasets'])[0]
         params['dbs'] = 'phys03'
 
+    # check das for dataset presence
+    if params['whitelist'] is not None:
+        das_resp = ast.literal_eval(subprocess.check_output(
+            ['dasgoclient', '-json', '-query={} instance=prod/{} site'.format(
+                params['dataset'], params['dbs'])]))
+        sites_info = [s['site'][0] for s in das_resp
+            if 'combined' in s['das']['services'][0]]
+
+        sites_available = [s for s in sites_info if s['kind'] == 'Disk']
+        if not any(s['name'] in params['whitelist'] for s in sites_available):
+            print('dataset not available in whitelisted sites:',
+                  params['whitelist'])
+            print('  note: dataset availability: {}'.format(
+                [s['name'] for s in sites_available]))
+            sys.exit()
+
     if params['split'] is None:
         params['split'] = 'FileBased'
 
