@@ -3,6 +3,7 @@
 from __future__ import print_function
 
 import argparse
+import ast
 import contextlib
 import math
 import os
@@ -128,11 +129,11 @@ def collect_analysis_parameters(params):
         params['split'] = 'FileBased'
 
         # rough splitting for jobs, based on events/job target
-        das_resp = eval(subprocess.check_output(
-            ['dasgoclient', '-query={} instance=prod/{} summary'.format(
-                 params['dataset'], params['dbs'])]))
+        das_resp = ast.literal_eval(subprocess.check_output([
+            'dasgoclient', '-query={} instance=prod/{} summary'.format(
+                params['dataset'], params['dbs'])]))[0]
         params['units'] = max(1, int(math.floor(target[params['step']]
-            / (das_resp[0]['nevents'] / das_resp[0]['nfiles']))))
+            / (das_resp['nevents'] / das_resp['nfiles']))))
 
     # generate request name
     params['request'] = '{}_{}_{}_{}_v{}'.format(
