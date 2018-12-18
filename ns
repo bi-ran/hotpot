@@ -115,10 +115,11 @@ def collect_production_parameters(params):
         params['pd'] = params['pset'].partition('_cff_py')[0]
 
     # generate request name
-    params['request'] = '{}_GENSIM_{}_{}'.format(
+    params['request'] = '{}_GENSIM_{}_{}_v{}'.format(
         params['pd'],
         os.environ['CMSSW_VERSION'][5:].replace('_', ''),
-        params['tag'])
+        params['tag'],
+        params['version']).replace('__', '_')
 
     params['type'] = 'PrivateMC'
 
@@ -154,12 +155,13 @@ def collect_analysis_parameters(params):
             sys.exit()
 
     # generate request name
-    params['request'] = '{}_{}_{}_{}'.format(
+    params['request'] = '{}_{}_{}_{}_v{}'.format(
         (params['dataset'].split('/')[1] if 'Run201' not in params['dataset']
             else '_'.join(params['dataset'].split('/')[1:3])),
         params['step'],
         os.environ['CMSSW_VERSION'][5:].replace('_', ''),
-        params['tag'])
+        params['tag'],
+        params['version']).replace('__', '_')
 
     params['type'] = 'Analysis'
 
@@ -186,9 +188,6 @@ def collect_parameters(params):
     if params['whitelist'] is not None:
         params['extrajdl'] = ['+CMS_ALLOW_OVERFLOW=False']
 
-    if params['tag'] != 'v1':
-        params['tag'] += '_v1'
-
     if params['step'] == 'GENSIM':
         collect_production_parameters(params)
     else:
@@ -205,12 +204,14 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--out')
     parser.add_argument('-s', '--step')
 
+    parser.add_argument('-v', '--version', default=1, type=int)
+
     parser.add_argument('--events', default=-1, type=int)
     parser.add_argument('--filter', default=1., type=float)
     parser.add_argument('--memory', default=4000, type=int)
     parser.add_argument('--publish', default=True, type=bool)
     parser.add_argument('--site', default='T2_US_MIT')
-    parser.add_argument('--tag', default='v1')
+    parser.add_argument('--tag', default='')
     parser.add_argument('--transfer', default=True, type=bool)
     parser.add_argument('--workspace', default='crab_area')
 
