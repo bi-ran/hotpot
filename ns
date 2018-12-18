@@ -100,7 +100,7 @@ def collect_production_parameters(params):
     # target 200 events per job (GENSIM)
     params['split'] = 'EventBased'
     params['units'] = int(math.ceil(200 / params['filter']))
-    params['total'] = int(params['units'] * math.ceil(params['events'] / 200))
+    params['total'] = int(params['units'] * math.ceil(params['total'] / 200))
 
     # devise dataset name if not given
     if params['pd'] is None:
@@ -133,7 +133,6 @@ def collect_analysis_parameters(params):
                  params['dataset'], params['dbs'])]))
         params['units'] = max(1, int(math.floor(target[params['step']]
             / (das_resp[0]['nevents'] / das_resp[0]['nfiles']))))
-        params['total'] = params['events']
 
     # generate request name
     params['request'] = '{}_{}_{}_{}_v{}'.format(
@@ -156,8 +155,8 @@ def check_parameters(params):
         return False
 
     if params['step'] == 'GENSIM':
-        if params['events'] <= 0:
-            print('invalid events:', params['events'])
+        if params['total'] <= 0:
+            print('invalid total events (-t N):', params['total'])
             return False
         if params['filter'] <= 0:
             print('invalid filter efficiency:', params['filter'])
@@ -173,9 +172,13 @@ def check_parameters(params):
             print('no dbs instance')
             return False
 
-        if params['split'] not in ['Automatic', None]:
-            if params['units'] is None or params['total'] is None:
-                print('manual splitting, but no units/total')
+        if params['split'] is 'Automatic':
+            if params['units'] < 180:
+                print('invalid target runtime for automatic splitting (-u N)')
+                return False
+        elif params['split'] is not None:
+            if params['units'] is None:
+                print('manual splitting, but no units/job')
                 return False
 
     return True
@@ -213,9 +216,9 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--out')
     parser.add_argument('-s', '--step')
 
-    parser.add_argument('-e', '--events', default=-1, type=int)
     parser.add_argument('-f', '--filter', default=1., type=float)
     parser.add_argument('-m', '--memory', default=4000, type=int)
+    parser.add_argument('-t', '--total', default=-1, type=int)
     parser.add_argument('-v', '--version', default=1, type=int)
 
     parser.add_argument('--publish', default=True, type=bool)
@@ -232,13 +235,13 @@ if __name__ == '__main__':
         'Automatic', 'EventBased', 'FileBased', 'LumiBased',
         'EventAwareLumiBased'})
 
+    parser.add_argument('-u', '--units', type=int)
+
     parser.add_argument('--dataset')
     parser.add_argument('--dbs')
     parser.add_argument('--lfn')
     parser.add_argument('--pd')
     parser.add_argument('--runtime', type=int)
-    parser.add_argument('--total', type=int)
-    parser.add_argument('--units', type=int)
 
     args = parser.parse_args()
 
