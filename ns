@@ -96,14 +96,6 @@ def generate_config(params):
 
 
 def collect_production_parameters(params):
-    if params['events'] <= 0:
-        print('invalid events:', params['events'])
-        sys.exit()
-
-    if params['filter'] <= 0:
-        print('invalid filter efficiency:', params['filter'])
-        sys.exit()
-
     # split jobs based on filter efficiency and total events
     # target 200 events per job (GENSIM)
     params['split'] = 'EventBased'
@@ -126,18 +118,11 @@ def collect_production_parameters(params):
 
 def collect_analysis_parameters(params):
     if params['dataset'] is None:
-        if params['dir'] is None:
-            print('no input dataset')
-            sys.exit()
-        else:
-            # find output dataset
-            with silence():
-                crab_resp = crab('status', dir=params['dir'])
-            params['dataset'] = eval(crab_resp['outdatasets'])[0]
-            params['dbs'] = 'phys03'
-    elif params['dbs'] is None:
-        print('no dbs instance')
-        sys.exit()
+        # find output dataset
+        with silence():
+            crab_resp = crab('status', dir=params['dir'])
+        params['dataset'] = eval(crab_resp['outdatasets'])[0]
+        params['dbs'] = 'phys03'
 
     if params['split'] is None:
         params['split'] = 'FileBased'
@@ -149,10 +134,6 @@ def collect_analysis_parameters(params):
         params['units'] = max(1, int(math.floor(target[params['step']]
             / (das_resp[0]['nevents'] / das_resp[0]['nfiles']))))
         params['total'] = params['events']
-    else:
-        if params['units'] is None or params['total'] is None:
-            print('manual splitting, but no units/total')
-            sys.exit()
 
     # generate request name
     params['request'] = '{}_{}_{}_{}_v{}'.format(
@@ -166,22 +147,50 @@ def collect_analysis_parameters(params):
     params['type'] = 'Analysis'
 
 
+def check_parameters(params):
+    if params['step'] is None or params['step'] not in steps:
+        print('invalid step')
+        return False
+    if params['lfn'] is None and params['site'] not in sites:
+        print('lfn not known for site:', params['site'])
+        return False
+
+    if params['step'] == 'GENSIM':
+        if params['events'] <= 0:
+            print('invalid events:', params['events'])
+            return False
+        if params['filter'] <= 0:
+            print('invalid filter efficiency:', params['filter'])
+            return False
+        if params['split'] not in ['EventBased', None]:
+            print('splitting for GENSIM must be EventBased')
+            return False
+    else:
+        if params['dataset'] is None and params['dir'] is None:
+            print('no input dataset')
+            return False
+        elif params['dbs'] is None:
+            print('no dbs instance')
+            return False
+
+        if params['split'] not in ['Automatic', None]:
+            if params['units'] is None or params['total'] is None:
+                print('manual splitting, but no units/total')
+                return False
+
+    return True
+
+
 def collect_parameters(params):
-    if params['step'] in steps:
-        pass
-    elif params['step'] is None and any(g in params['pset'] for g in guess):
+    if params['step'] is None and any(g in params['pset'] for g in guess):
         step = next(g for g in guess if g in params['pset'])
         params['step'] = steps[guess.index(step)]
         print('guessing this is ..', params['step'])
-    else:
-        print('no --step')
+
+    if not check_parameters(params):
         sys.exit()
 
     if params['lfn'] is None:
-        if params['site'] not in sites:
-            print('invalid site')
-            sys.exit()
-
         params['lfn'] = sites[params['site']]
     params['lfn'] += os.environ['USER']
 
