@@ -137,11 +137,12 @@ def collect_analysis_parameters(params):
 
         sites_available = [s for s in sites_info if s['kind'] == 'Disk']
         if not any(s['name'] in params['whitelist'] for s in sites_available):
-            print('dataset not available in whitelisted sites:',
+            print('warning: dataset not available in whitelisted sites:',
                   params['whitelist'])
-            print('  note: dataset availability: {}'.format(
-                [s['name'] for s in sites_available]))
-            sys.exit()
+            sites_list = [s['name'] for s in sites_available]
+            print('   note: dataset availability:', sites_list)
+            print('warning: changing whitelist accordingly')
+            params['whitelist'] = sites_list
 
     if params['split'] is None:
         params['split'] = 'FileBased'
