@@ -59,7 +59,7 @@ def generate_config(params):
             'unitsPerJob': 'units',
             'totalUnits': 'total',
             'outLFNDirBase': 'lfn',
-            'outputPrimaryDataset': 'pd',
+            'outputPrimaryDataset': 'primarydataset',
             'publication': 'publish' },
         'User': {},
         'Site': {
@@ -104,12 +104,13 @@ def collect_production_parameters(params):
     params['total'] = int(params['units'] * math.ceil(params['total'] / 200))
 
     # devise dataset name if not given
-    if params['pd'] is None:
-        params['pd'] = params['pset'].partition('_cff_py')[0]
+    if params['dataset'] is None:
+        params['dataset'] = params['pset'].partition('_cff_py')[0]
+    params['primarydataset'] = params['dataset']
 
     # generate request name
     params['request'] = '{}_GENSIM_{}_{}_v{}'.format(
-        params['pd'],
+        params['primarydataset'],
         os.environ['CMSSW_VERSION'][5:].replace('_', ''),
         params['tag'],
         params['version']).replace('__', '_')
@@ -181,10 +182,16 @@ def check_parameters(params):
         if params['split'] not in ['EventBased', None]:
             print('splitting for GENSIM must be EventBased')
             return False
+        if params['dbs'] is not None:
+            print('warning: GENSIM step has dbs set - will be ignored')
+            params['dbs'] = None
     else:
-        if params['dataset'] is None and params['dir'] is None:
-            print('no input dataset')
-            return False
+        if params['dataset'] is None:
+            if params['dir'] is None:
+                print('no input dataset')
+                return False
+            elif params['dbs'] is not None:
+                print('warning: ignoring dbs instance for analysis dataset')
         elif params['dbs'] is None:
             print('no dbs instance')
             return False
@@ -257,7 +264,6 @@ if __name__ == '__main__':
     parser.add_argument('--dataset')
     parser.add_argument('--dbs')
     parser.add_argument('--lfn')
-    parser.add_argument('--pd')
     parser.add_argument('--runtime', type=int)
 
     args = parser.parse_args()
