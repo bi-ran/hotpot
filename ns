@@ -229,6 +229,7 @@ def collect_parameters(params):
     params['lfn'] += os.environ['USER']
 
     if params['whitelist'] is not None:
+        params['whitelist'] = params['whitelist'].split(',')
         params['extrajdl'] = ['+CMS_ALLOW_OVERFLOW=False']
 
     if params['step'] == 'GENSIM':
