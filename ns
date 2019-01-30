@@ -148,12 +148,13 @@ def collect_analysis_parameters(params):
     if params['split'] is None:
         params['split'] = 'FileBased'
 
-        # rough splitting for jobs, based on events/job target
-        das_resp = ast.literal_eval(subprocess.check_output([
-            'dasgoclient', '-query={} instance=prod/{} summary'.format(
-                params['dataset'], params['dbs'])]))[0]
-        params['units'] = max(1, int(math.floor(target[params['step']]
-            / (das_resp['nevents'] / das_resp['nfiles']))))
+        if params['units'] is None:
+            # rough splitting for jobs, based on events/job target
+            das_resp = ast.literal_eval(subprocess.check_output([
+                'dasgoclient', '-query={} instance=prod/{} summary'.format(
+                    params['dataset'], params['dbs'])]))[0]
+            params['units'] = max(1, int(math.floor(target[params['step']]
+                / (das_resp['nevents'] / das_resp['nfiles']))))
 
     # generate request name
     params['request'] = '{}_{}_{}_{}_v{}'.format(
