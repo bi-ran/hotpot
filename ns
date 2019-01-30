@@ -59,6 +59,7 @@ def generate_config(params):
             'splitting': 'split',
             'unitsPerJob': 'units',
             'totalUnits': 'total',
+            'lumiMask': 'lumimask',
             'outLFNDirBase': 'lfn',
             'outputPrimaryDataset': 'primarydataset',
             'publication': 'publish' },
@@ -272,6 +273,7 @@ if __name__ == '__main__':
     parser.add_argument('--dataset')
     parser.add_argument('--dbs')
     parser.add_argument('--lfn')
+    parser.add_argument('--lumimask')
     parser.add_argument('--runtime', type=int)
 
     args = parser.parse_args()
