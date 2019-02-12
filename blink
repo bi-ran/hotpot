@@ -38,7 +38,7 @@ while [ $# -gt 0 ]; do
       -v|--verbose)  verbose=1; shift ;;
       -x|--expr)     fexpr="$2"; shift 2 ;;
       --expr=*)      fexpr="${1#*=}"; shift ;;
-      -d|--xrootd)   site="root://cmsrootd.fnal.gov/"; prtcl=xrdcp; shift ;;
+      -d|--xrootd)   site="root://cmsxrootd.fnal.gov/"; prtcl=xrdcp; shift ;;
       -e|--eos)      site="root://eoscms.cern.ch:1094/"; prtcl=xrdcp; shift ;;
       -m|--t2mit)    site="gsiftp://se01.cmsaf.mit.edu:2811/";
                         fexpr="#\'/mnt/hadoop/\'"; prtcl=gfal-copy; shift ;;
