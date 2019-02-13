@@ -7,6 +7,7 @@ import ast
 import contextlib
 import math
 import os
+import re
 import subprocess
 import sys
 
@@ -107,8 +108,12 @@ def collect_production_parameters(params):
 
     # devise dataset name if not given
     if params['dataset'] is None:
-        params['dataset'] = params['pset'].partition('_cff_py')[0]
+        params['dataset'] = (os.path.splitext(params['pset'])[0]
+            .partition('_cff_py')[0].partition('_cfi_py')[0])
+    if params['dataset'].count('GEN'):
+        params['dataset'] = re.sub('_GEN_?SIM(_PU)?', '', params['dataset'], 1)
     params['primarydataset'] = params['dataset']
+    params['dataset'] = None
 
     # generate request name
     params['request'] = '{}_GENSIM_{}_{}_v{}'.format(
