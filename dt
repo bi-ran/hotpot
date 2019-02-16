@@ -2,7 +2,7 @@
 
 helpmessage() {
    echo -e "usage: dt [input]\n"
-   echo -e "   -k, --key      group by event/module/label"
+   echo -e "   -k, --key      group by event/module/label [0, 1, 2]"
    echo -e "   -t, --tag      tag"
 }
 
@@ -30,7 +30,7 @@ input=$1
 
 file=$(basename $input)
 timestamp=$(date +"%F-%H_%M_%S")
-label=${file%%.*}_${tag}_${timestamp}
+label=${tag}_${file%%.*}_${timestamp}
 
 mkdir $label
 cp $input $label/$label.py
