@@ -155,7 +155,8 @@ def collect_analysis_parameters(params):
                 print('warning: dataset not available in whitelisted sites:',
                       params['whitelist'])
                 sites_list = [s['name'] for s in sites_available
-                              if not s['name'].startswith('T1_')]
+                              if not any(s['name'].startswith(p)
+                                  for p in ['T0_', 'T1_'])]
                 print('   note: dataset availability:', sites_list)
                 print('warning: changing whitelist accordingly')
                 params['whitelist'] = sites_list
