@@ -210,7 +210,7 @@ def check_parameters(params):
                 print('no input dataset')
                 return False
             elif params['dbs'] is not None:
-                print('warning: ignoring dbs instance for analysis dataset')
+                print('warning: ignoring dbs instance for private dataset')
         elif params['dbs'] is None:
             print('no dbs instance')
             return False
@@ -237,6 +237,9 @@ def collect_parameters(params):
 
         if params['step'] is not None:
             print('guessing this is ..', params['step'])
+
+    if params['global'] == True:
+        params['dbs'] = 'global'
 
     if not check_parameters(params):
         sys.exit()
@@ -269,6 +272,7 @@ if __name__ == '__main__':
     parser.add_argument('-t', '--total', default=-1, type=int)
     parser.add_argument('-v', '--version', default=1, type=int)
 
+    parser.add_argument('-g', '--global', action='store_true')
     parser.add_argument('-i', '--input', action='append')
     parser.add_argument('-p', '--priority', type=int)
     parser.add_argument('-u', '--units', type=int)
