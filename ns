@@ -75,8 +75,6 @@ def generate_config(params):
         }
 
     output = 'config_crab_{}.py'.format(params['request'].lower())
-    if params['out']:
-        output = '{}/{}'.format(params['out'], output)
 
     with open(output, 'w') as f:
         f.write('from WMCore.Configuration import Configuration\n')
@@ -264,7 +262,6 @@ if __name__ == '__main__':
     parser.add_argument('pset')
 
     parser.add_argument('-d', '--dir')
-    parser.add_argument('-o', '--out')
     parser.add_argument('-s', '--step')
 
     parser.add_argument('-f', '--filter', default=1., type=float)
@@ -272,23 +269,22 @@ if __name__ == '__main__':
     parser.add_argument('-t', '--total', default=-1, type=int)
     parser.add_argument('-v', '--version', default=1, type=int)
 
-    parser.add_argument('--ignoredas', default=False, action='store_true')
-    parser.add_argument('--publish', default=True, action='store_false')
-    parser.add_argument('--site', default='T2_US_MIT')
-    parser.add_argument('--tag', default='')
-    parser.add_argument('--transfer', default=True, action='store_false')
-    parser.add_argument('--workspace', default='crab_area')
+    parser.add_argument('-i', '--input', action='append')
+    parser.add_argument('-p', '--priority', type=int)
+    parser.add_argument('-u', '--units', type=int)
 
     parser.add_argument('-w', '--whitelist', nargs='?', const='T2_US_MIT')
 
-    parser.add_argument('-i', '--input', action='append')
+    parser.add_argument('--ignoredas', action='store_true')
+    parser.add_argument('--publish', action='store_false')
+    parser.add_argument('--site', default='T2_US_MIT')
+    parser.add_argument('--tag', default='')
+    parser.add_argument('--transfer', action='store_false')
+    parser.add_argument('--workspace', default='crab_area')
 
     parser.add_argument('--split', choices={
         'Automatic', 'EventBased', 'FileBased', 'LumiBased',
         'EventAwareLumiBased'})
-
-    parser.add_argument('-p', '--priority', type=int)
-    parser.add_argument('-u', '--units', type=int)
 
     parser.add_argument('--dataset')
     parser.add_argument('--dbs')
