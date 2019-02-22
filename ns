@@ -53,7 +53,8 @@ def generate_config(params):
             'psetName': 'pset',
             'inputFiles': 'input',
             'maxMemoryMB': 'memory',
-            'maxJobRuntimeMin': 'runtime' },
+            'maxJobRuntimeMin': 'runtime',
+            'priority': 'priority' },
         'Data': {
             'inputDataset': 'dataset',
             'inputDBS': 'dbs',
@@ -286,6 +287,7 @@ if __name__ == '__main__':
         'Automatic', 'EventBased', 'FileBased', 'LumiBased',
         'EventAwareLumiBased'})
 
+    parser.add_argument('-p', '--priority', type=int)
     parser.add_argument('-u', '--units', type=int)
 
     parser.add_argument('--dataset')
