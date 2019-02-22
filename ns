@@ -284,7 +284,8 @@ if __name__ == '__main__':
     parser.add_argument('--site', default='T2_US_MIT')
     parser.add_argument('--tag', default='')
     parser.add_argument('--transfer', action='store_false')
-    parser.add_argument('--workspace', default='crab_area')
+    parser.add_argument('--workspace', default='{}/crab'.format(
+        os.environ['HOME']))
 
     parser.add_argument('--split', choices={
         'Automatic', 'EventBased', 'FileBased', 'LumiBased',
