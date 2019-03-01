@@ -145,8 +145,7 @@ def collect_analysis_parameters(params):
                 raise
         else:
             sites_info = [s['site'][0] for s in das_resp if
-                any(r in s['das']['services'][0] for r in [
-                    'combined', 'dbs3', 'phedex'])]
+                any(r in s['das']['services'][0] for r in ['combined', 'dbs3'])]
 
             try:
                 sites_available = [s for s in sites_info if
@@ -154,7 +153,8 @@ def collect_analysis_parameters(params):
             except KeyError:
                 # query for block
                 print('warning: storage type not available [block query?]')
-                sites_available = [s for s in sites_info]
+                sites_available = [s['site'][0] for s in das_resp if
+                    'phedex' in s['das']['services'][0]]
 
             if not any(s['name'] in params['whitelist'] for
                     s in sites_available):
