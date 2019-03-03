@@ -130,6 +130,8 @@ def collect_analysis_parameters(params):
         with silence():
             crab_resp = crab('status', dir=params['dir'])
         params['dataset'] = eval(crab_resp['outdatasets'])[0]
+
+    if params['dbs'] is None:
         params['dbs'] = 'phys03'
 
     # check das for dataset presence
@@ -218,9 +220,6 @@ def check_parameters(params):
                 return False
             elif params['dbs'] is not None:
                 print('warning: ignoring dbs instance for private dataset')
-        elif params['dbs'] is None:
-            print('no dbs instance')
-            return False
 
         if params['split'] is 'Automatic':
             if params['units'] < 180:
