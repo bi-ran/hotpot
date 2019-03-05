@@ -56,6 +56,7 @@ def generate_config(params):
             'maxJobRuntimeMin': 'runtime',
             'priority': 'priority' },
         'Data': {
+            'ignoreLocality': 'ignorelocal',
             'inputDataset': 'dataset',
             'inputDBS': 'dbs',
             'splitting': 'split',
@@ -135,7 +136,7 @@ def collect_analysis_parameters(params):
         params['dbs'] = 'phys03'
 
     # check das for dataset presence
-    if params['whitelist'] is not None:
+    if not params['ignoredas'] and params['whitelist'] is not None:
         try:
             das_resp = ast.literal_eval(subprocess.check_output([
                 'dasgoclient', '-json',
@@ -143,8 +144,7 @@ def collect_analysis_parameters(params):
                     params['dataset'], params['dbs'])]))
         except subprocess.CalledProcessError:
             print('warning: das query failed!')
-            if not params['ignoredas']:
-                raise
+            raise
         else:
             sites_info = [s['site'][0] for s in das_resp if
                 any(r in s['das']['services'][0] for r in ['combined', 'dbs3'])]
@@ -213,6 +213,9 @@ def check_parameters(params):
         if params['dbs'] is not None:
             print('warning: GENSIM step has dbs set - will be ignored')
             params['dbs'] = None
+        if params['nonlocal']:
+            print('warning: ignoring nonlocal setting for GENSIM')
+            params['nonlocal'] = False
     else:
         if params['dataset'] is None:
             if params['dir'] is None:
@@ -228,6 +231,10 @@ def check_parameters(params):
         elif params['split'] is not None:
             if params['units'] is None:
                 print('manual splitting, but no units/job')
+                return False
+        elif params['ignoredas']:
+            if params['units'] is None:
+                print('automatic splitting, but skipping DAS query')
                 return False
 
     return True
@@ -254,7 +261,11 @@ def collect_parameters(params):
         params['lfn'] = sites[params['site']]
     params['lfn'] += os.environ['USER']
 
-    if params['whitelist'] is not None:
+    if params['nonlocal']:
+        params['ignorelocal'] = True
+        params['ignoredas'] = True
+        params['whitelist'] = ['T2_US_*']
+    elif params['whitelist'] is not None:
         params['whitelist'] = params['whitelist'].split(',')
         params['extrajdl'] = ['+CMS_ALLOW_OVERFLOW=False']
 
@@ -286,6 +297,7 @@ if __name__ == '__main__':
     parser.add_argument('-w', '--whitelist', nargs='?', const='T2_US_MIT')
 
     parser.add_argument('--ignoredas', action='store_true')
+    parser.add_argument('--nonlocal', action='store_true')
     parser.add_argument('--publish', action='store_false')
     parser.add_argument('--site', default='T2_US_MIT')
     parser.add_argument('--tag', default='')
