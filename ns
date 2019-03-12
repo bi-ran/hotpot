@@ -166,6 +166,9 @@ def collect_analysis_parameters(params):
                               if not any(s['name'].startswith(p)
                                   for p in ['T0_', 'T1_'])]
                 print('   note: dataset availability:', sites_list)
+                if not sites_list:
+                    print('error: dataset not available on disk')
+                    sys.exit()
                 print('warning: changing whitelist accordingly')
                 params['whitelist'] = sites_list
 
