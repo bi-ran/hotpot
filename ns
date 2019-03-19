@@ -224,7 +224,7 @@ def check_parameters(params):
             if params['dir'] is None:
                 print('no input dataset')
                 return False
-            elif params['dbs'] is not None:
+            elif params['dbs'] not in [None, 'phys03']:
                 print('warning: ignoring dbs instance for private dataset')
 
         if params['split'] is 'Automatic':
