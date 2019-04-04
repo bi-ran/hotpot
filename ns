@@ -57,6 +57,7 @@ def generate_config(params):
             'priority': 'priority' },
         'Data': {
             'ignoreLocality': 'ignorelocal',
+            'allowNonValidInputDataset': 'nonvalid',
             'inputDataset': 'dataset',
             'inputDBS': 'dbs',
             'splitting': 'split',
@@ -305,6 +306,7 @@ if __name__ == '__main__':
     parser.add_argument('--site', default='T2_US_MIT')
     parser.add_argument('--tag', default='')
     parser.add_argument('--transfer', action='store_false')
+    parser.add_argument('--nonvalid', action='store_true')
     parser.add_argument('--workspace', default='{}/crab'.format(
         os.environ['HOME']))
 
