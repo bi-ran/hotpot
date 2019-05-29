@@ -268,10 +268,13 @@ def collect_parameters(params):
     if params['nonlocal']:
         params['ignorelocal'] = True
         params['ignoredas'] = True
-        params['whitelist'] = ['T2_US_*']
-    elif params['whitelist'] is not None:
+        if params['whitelist'] is None:
+            params['whitelist'] = 'T2_US_*'
+
+    if params['whitelist'] is not None:
         params['whitelist'] = params['whitelist'].split(',')
-        params['extrajdl'] = ['+CMS_ALLOW_OVERFLOW=False']
+        if not params['nonlocal']:
+            params['extrajdl'] = ['+CMS_ALLOW_OVERFLOW=False']
 
     if params['step'] == 'GENSIM':
         collect_production_parameters(params)
