@@ -17,6 +17,7 @@ while [ $# -gt 0 ]; do
       -g|--global)   global=1; shift ;;
       -h|--help)     helpmessage; exit 0 ;;
       -l|--link)     link=1; shift ;;
+      -n|--inv)      invalidate=1; shift;;
       -*)            echo -e "invalid option: $1\n"; exit 1 ;;
       *)             ARGS+=("$1"); shift ;;
    esac
@@ -27,6 +28,13 @@ set -- "${ARGS[@]}"
 [ $# -lt 1 ] && { echo -e "check arguments\n"; exit 1; }
 
 dataset=$1
+
+if [ $invalidate ]; then
+   python $DBS3_CLIENT_ROOT/examples/DBS3SetDatasetStatus.py \
+      --dataset=$dataset --recursive=False --status=INVALID \
+      --url=https://cmsweb.cern.ch/dbs/prod/phys03/DBSWriter
+   exit 0
+fi
 
 instance=phys03
 [ $global ] && instance=global
