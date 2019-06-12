@@ -57,7 +57,7 @@ def generate_config(params):
             'priority': 'priority' },
         'Data': {
             'ignoreLocality': 'ignorelocal',
-            'allowNonValidInputDataset': 'nonvalid',
+            'allowNonValidInputDataset': 'allowinvalid',
             'inputDataset': 'dataset',
             'inputDBS': 'dbs',
             'splitting': 'split',
@@ -264,6 +264,9 @@ def collect_parameters(params):
     if params['lfn'] is None:
         params['lfn'] = sites[params['site']]
     params['lfn'] += os.environ['USER']
+
+    if params['nonvalid']:
+        params['allowinvalid'] = True
 
     if params['nonlocal']:
         params['ignorelocal'] = True
